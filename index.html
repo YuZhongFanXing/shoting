@@ -463,8 +463,8 @@
                 });
             }
             
-            // 生成医药包（BOSS关卡更多）
-            const healthPackCount = config.boss ? 15 : 3;
+            // 生成医药包（BOSS关卡只有4个）
+            const healthPackCount = config.boss ? 4 : 3;
             for (let i = 0; i < healthPackCount; i++) {
                 game.healthPacks.push({
                     x: 300 + Math.random() * (config.width - 600),
@@ -515,7 +515,11 @@
             if (config.boss) {
                 // BOSS关卡
                 spawnBoss(config.width);
-                game.totalEnemies = 1;
+                // 生成两只巨型飞鸟
+                for (let i = 0; i < 2; i++) {
+                    spawnGiantBird(config.width, i);
+                }
+                game.totalEnemies = 3; // BOSS + 2只巨鸟
             } else {
                 // 普通关卡
                 for (let i = 0; i < config.enemies; i++) {
@@ -596,6 +600,26 @@
                 flyFrame: 0,
                 onGround: false,
                 attacking: false
+            });
+        }
+        
+        function spawnGiantBird(maxWidth, index) {
+            game.enemies.push({
+                x: 800 + index * 400 + Math.random() * 200,
+                y: 80 + Math.random() * 100,
+                width: 80,
+                height: 60,
+                hp: 200,
+                maxHp: 200,
+                speed: 2.5,
+                damage: 20,
+                type: 'giantBird',
+                vx: (Math.random() - 0.5) * 3,
+                vy: 0,
+                flyFrame: 0,
+                onGround: false,
+                attacking: false,
+                diveBombCooldown: 0
             });
         }
         
@@ -1230,6 +1254,52 @@
                         enemy.attacking = true;
                         playerHit(enemy.damage);
                         setTimeout(() => enemy.attacking = false, 100);
+                    }
+                } else if (enemy.type === 'giantBird') {
+                    // 巨型飞鸟AI
+                    enemy.flyFrame += 0.15;
+                    const dy = game.player.y - enemy.y;
+                    const dx = game.player.x - enemy.x;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // 俯冲轰炸技能（5秒冷却）
+                    if (enemy.diveBombCooldown <= 0 && dist < 500 && Math.abs(dx) < 200) {
+                        enemy.diveBombCooldown = 5000;
+                        enemy.isDiving = true;
+                        
+                        // 快速俯冲
+                        const diveAngle = Math.atan2(dy, dx);
+                        enemy.vx = Math.cos(diveAngle) * 12;
+                        enemy.vy = Math.sin(diveAngle) * 12;
+                        
+                        setTimeout(() => {
+                            enemy.isDiving = false;
+                        }, 1000);
+                    } else if (!enemy.isDiving) {
+                        // 正常飞行
+                        if (Math.abs(dx) > 150) {
+                            enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
+                        }
+                        if (Math.abs(dy) > 80) {
+                            enemy.vy = dy > 0 ? enemy.speed * 0.6 : -enemy.speed * 0.6;
+                        }
+                    }
+                    
+                    enemy.x += enemy.vx;
+                    enemy.y += enemy.vy;
+                    
+                    if (!enemy.isDiving) {
+                        enemy.vx *= 0.96;
+                        enemy.vy *= 0.96;
+                    }
+                    
+                    enemy.diveBombCooldown -= 16;
+                    
+                    // 碰撞攻击
+                    if (checkCollision(enemy, game.player) && !enemy.attacking) {
+                        enemy.attacking = true;
+                        playerHit(enemy.damage);
+                        setTimeout(() => enemy.attacking = false, 500);
                     }
                 } else {
                     enemy.vy += gravity;
