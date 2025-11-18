@@ -15,45 +15,6 @@
             user-select: none;
         }
         
-        /* 强制横屏提示 */
-        #orientationWarning {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            color: #0f0;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 9999;
-            font-size: 24px;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        #orientationWarning .rotate-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: rotate 2s infinite;
-        }
-        
-        @keyframes rotate {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-        }
-        
-        @media (max-width: 768px) and (orientation: portrait) {
-            #orientationWarning {
-                display: flex !important;
-            }
-            #gameCanvas, #hud, #nameInput, #respawn, #levelComplete, #mobileControls {
-                display: none !important;
-            }
-        }
-        
         #gameCanvas { 
             display: block; 
             background: #1a0a0a;
@@ -207,107 +168,9 @@
             background: #0f0;
             color: #000;
         }
-        #mobileControls {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 200px;
-            display: none;
-            pointer-events: all;
-            z-index: 100;
-        }
-        .joystick {
-            position: absolute;
-            bottom: 30px;
-            left: 50px;
-            width: 120px;
-            height: 120px;
-            background: rgba(0, 255, 0, 0.2);
-            border: 3px solid #0f0;
-            border-radius: 50%;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .joystick-handle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 255, 0, 0.5);
-            border: 2px solid #0f0;
-            border-radius: 50%;
-            touch-action: none;
-            pointer-events: none;
-        }
-        .mobile-btn {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-            background: rgba(0, 255, 0, 0.3);
-            border: 3px solid #0f0;
-            border-radius: 50%;
-            color: #0f0;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-        .mobile-btn:active {
-            background: rgba(0, 255, 0, 0.5);
-            transform: scale(0.95);
-        }
-        #jumpBtn {
-            bottom: 100px;
-            right: 50px;
-        }
-        #shootBtn {
-            bottom: 30px;
-            right: 140px;
-        }
-        #reloadBtn {
-            bottom: 30px;
-            right: 50px;
-        }
-        /* 移动端样式 - 只在横屏时显示控制器 */
-        @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
-            #mobileControls {
-                display: block !important;
-            }
-            #info {
-                font-size: 14px;
-            }
-        }
-        
-        /* PC端隐藏移动控制器 */
-        @media (hover: hover) and (pointer: fine) {
-            #mobileControls {
-                display: none !important;
-            }
-        }
-        
-        /* 移动端竖屏时隐藏控制器 */
-        @media (max-width: 768px) and (orientation: portrait) {
-            #mobileControls {
-                display: none !important;
-            }
-        }
     </style>
 </head>
 <body>
-    <div id="orientationWarning">
-        <div class="rotate-icon">📱↻</div>
-        <div>请将设备横屏以获得最佳游戏体验</div>
-        <div style="font-size: 18px; margin-top: 20px; color: #888;">Rotate your device to landscape mode</div>
-    </div>
-    
     <div id="nameInput">
         <h2>末世废土</h2>
         <div style="color: #0f0; margin-bottom: 20px;">请输入你的昵称</div>
@@ -343,15 +206,6 @@
         <div>🎉 恭喜你通关了！🎉</div>
         <div style="font-size: 32px; margin-top: 30px;">你击败了最终BOSS</div>
         <div style="font-size: 24px; margin-top: 20px; color: #0f0;">感谢游玩！</div>
-    </div>
-    
-    <div id="mobileControls">
-        <div class="joystick" id="joystick">
-            <div class="joystick-handle" id="joystickHandle"></div>
-        </div>
-        <div class="mobile-btn" id="jumpBtn">跳</div>
-        <div class="mobile-btn" id="shootBtn">射</div>
-        <div class="mobile-btn" id="reloadBtn">R</div>
     </div>
 
     <script>
@@ -421,13 +275,7 @@
             keys: {},
             mouse: { x: 0, y: 0 },
             gameOver: false,
-            levelComplete: false,
-            mobile: {
-                joystickActive: false,
-                joystickX: 0,
-                joystickY: 0,
-                shooting: false
-            }
+            levelComplete: false
         };
 
         // 关卡配置
@@ -451,7 +299,14 @@
             game.explosives = [];
             game.ammoDrops = [];
             game.companions = [];
-            game.totalEnemies = config.enemies + config.birds;
+            
+            // BOSS关卡只需要击败BOSS，不需要击败飞鸟
+            if (config.boss) {
+                game.totalEnemies = 1; // 只有BOSS
+            } else {
+                game.totalEnemies = config.enemies + config.birds;
+            }
+            
             game.enemiesKilled = 0;
             game.levelComplete = false;
             game.gameOver = false;
@@ -511,8 +366,8 @@
                 });
             }
             
-            // 生成医药包（BOSS关卡只有4个）
-            const healthPackCount = config.boss ? 4 : 3;
+            // 生成医药包 - BOSS关卡有8个医药包
+            const healthPackCount = config.boss ? 8 : 3;
             for (let i = 0; i < healthPackCount; i++) {
                 game.healthPacks.push({
                     x: 300 + Math.random() * (config.width - 600),
@@ -563,11 +418,7 @@
             if (config.boss) {
                 // BOSS关卡
                 spawnBoss(config.width);
-                // 生成两只巨型飞鸟
-                for (let i = 0; i < 2; i++) {
-                    spawnGiantBird(config.width, i);
-                }
-                game.totalEnemies = 3; // BOSS + 2只巨鸟
+                // BOSS关卡不需要飞鸟
             } else {
                 // 普通关卡
                 for (let i = 0; i < config.enemies; i++) {
@@ -651,27 +502,6 @@
             });
         }
         
-        function spawnGiantBird(maxWidth, index) {
-            game.enemies.push({
-                x: 600 + index * 800,
-                y: 150 + index * 100,
-                width: 2000,
-                height: 1500,
-                hp: 200,
-                maxHp: 200,
-                speed: 2.5,
-                damage: 20,
-                type: 'giantBird',
-                vx: (Math.random() - 0.5) * 3,
-                vy: 0,
-                flyFrame: 0,
-                onGround: false,
-                attacking: false,
-                diveBombCooldown: 3000 + index * 1000,
-                isDiving: false
-            });
-        }
-        
         function spawnBoss(maxWidth) {
             game.enemies.push({
                 x: maxWidth / 2,
@@ -719,131 +549,6 @@
         window.addEventListener('keydown', e => {
             if (e.key.toLowerCase() === 'r') reload();
         });
-        
-        // 移动端触控支持 - 使用更准确的检测方法
-        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        
-        if (isMobile) {
-            // 虚拟摇杆
-            const joystick = document.getElementById('joystick');
-            const joystickHandle = document.getElementById('joystickHandle');
-            let joystickTouch = null;
-            
-            joystick.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                joystickTouch = e.touches[0].identifier;
-                game.mobile.joystickActive = true;
-                updateJoystick(e.touches[0]);
-            });
-            
-            joystick.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                for (let touch of e.touches) {
-                    if (touch.identifier === joystickTouch) {
-                        updateJoystick(touch);
-                        break;
-                    }
-                }
-            });
-            
-            joystick.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                game.mobile.joystickActive = false;
-                game.mobile.joystickX = 0;
-                game.mobile.joystickY = 0;
-                joystickHandle.style.transform = 'translate(-50%, -50%)';
-            });
-            
-            function updateJoystick(touch) {
-                const rect = joystick.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const deltaX = touch.clientX - centerX;
-                const deltaY = touch.clientY - centerY;
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                const maxDistance = 35;
-                
-                if (distance > maxDistance) {
-                    const angle = Math.atan2(deltaY, deltaX);
-                    game.mobile.joystickX = Math.cos(angle);
-                    game.mobile.joystickY = Math.sin(angle);
-                    joystickHandle.style.transform = `translate(calc(-50% + ${Math.cos(angle) * maxDistance}px), calc(-50% + ${Math.sin(angle) * maxDistance}px))`;
-                } else {
-                    game.mobile.joystickX = deltaX / maxDistance;
-                    game.mobile.joystickY = deltaY / maxDistance;
-                    joystickHandle.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-                }
-            }
-            
-            // 跳跃按钮
-            document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (game.player.onGround) {
-                    game.player.vy = -game.player.jumpPower;
-                    game.player.onGround = false;
-                }
-            });
-            
-            // 射击按钮
-            const shootBtn = document.getElementById('shootBtn');
-            shootBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                game.mobile.shooting = true;
-                shoot();
-            });
-            
-            shootBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                game.mobile.shooting = false;
-            });
-            
-            // 持续射击
-            setInterval(() => {
-                if (game.mobile.shooting) {
-                    shoot();
-                }
-            }, 150);
-            
-            // 换弹按钮
-            document.getElementById('reloadBtn').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                reload();
-            });
-            
-            // 触摸屏幕瞄准
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                game.mouse.x = touch.clientX + game.camera.x;
-                game.mouse.y = touch.clientY + game.camera.y;
-            });
-            
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                game.mouse.x = touch.clientX + game.camera.x;
-                game.mouse.y = touch.clientY + game.camera.y;
-            });
-        }
-        
-        // 阻止移动端双击缩放和默认触摸行为
-        document.addEventListener('touchstart', (e) => {
-            if (e.target === canvas || e.target.closest('#mobileControls')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (e.target === canvas || e.target.closest('#mobileControls')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        document.addEventListener('touchend', (e) => {
-            if (e.target === canvas || e.target.closest('#mobileControls')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
 
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             game.level++;
@@ -977,27 +682,20 @@
 
             const gravity = 0.8;
 
-            // 玩家移动（键盘 + 移动端摇杆）
+            // 玩家移动
             game.player.vx = 0;
             
-            if (game.mobile.joystickActive) {
-                if (Math.abs(game.mobile.joystickX) > 0.2) {
-                    game.player.vx = game.mobile.joystickX * game.player.speed;
-                    game.player.facing = game.mobile.joystickX > 0 ? 1 : -1;
-                }
-            } else {
-                if (game.keys['a']) {
-                    game.player.vx = -game.player.speed;
-                    game.player.facing = -1;
-                }
-                if (game.keys['d']) {
-                    game.player.vx = game.player.speed;
-                    game.player.facing = 1;
-                }
-                if (game.keys['w'] && game.player.onGround) {
-                    game.player.vy = -game.player.jumpPower;
-                    game.player.onGround = false;
-                }
+            if (game.keys['a']) {
+                game.player.vx = -game.player.speed;
+                game.player.facing = -1;
+            }
+            if (game.keys['d']) {
+                game.player.vx = game.player.speed;
+                game.player.facing = 1;
+            }
+            if (game.keys['w'] && game.player.onGround) {
+                game.player.vy = -game.player.jumpPower;
+                game.player.onGround = false;
             }
 
             game.player.vy += gravity;
@@ -1325,52 +1023,6 @@
                         playerHit(enemy.damage);
                         setTimeout(() => enemy.attacking = false, 100);
                     }
-                } else if (enemy.type === 'giantBird') {
-                    // 巨型飞鸟AI
-                    enemy.flyFrame += 0.15;
-                    const dy = game.player.y - enemy.y;
-                    const dx = game.player.x - enemy.x;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // 俯冲轰炸技能（5秒冷却）
-                    if (enemy.diveBombCooldown <= 0 && dist < 500 && Math.abs(dx) < 200) {
-                        enemy.diveBombCooldown = 5000;
-                        enemy.isDiving = true;
-                        
-                        // 快速俯冲
-                        const diveAngle = Math.atan2(dy, dx);
-                        enemy.vx = Math.cos(diveAngle) * 12;
-                        enemy.vy = Math.sin(diveAngle) * 12;
-                        
-                        setTimeout(() => {
-                            enemy.isDiving = false;
-                        }, 1000);
-                    } else if (!enemy.isDiving) {
-                        // 正常飞行
-                        if (Math.abs(dx) > 150) {
-                            enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
-                        }
-                        if (Math.abs(dy) > 80) {
-                            enemy.vy = dy > 0 ? enemy.speed * 0.6 : -enemy.speed * 0.6;
-                        }
-                    }
-                    
-                    enemy.x += enemy.vx;
-                    enemy.y += enemy.vy;
-                    
-                    if (!enemy.isDiving) {
-                        enemy.vx *= 0.96;
-                        enemy.vy *= 0.96;
-                    }
-                    
-                    enemy.diveBombCooldown -= 16;
-                    
-                    // 碰撞攻击
-                    if (checkCollision(enemy, game.player) && !enemy.attacking) {
-                        enemy.attacking = true;
-                        playerHit(enemy.damage);
-                        setTimeout(() => enemy.attacking = false, 500);
-                    }
                 } else {
                     enemy.vy += gravity;
                     
@@ -1444,6 +1096,11 @@
             if (game.gate.open && checkCollision(game.player, game.gate)) {
                 game.levelComplete = true;
                 document.getElementById('levelComplete').style.display = 'block';
+                
+                // 如果这是BOSS关卡，显示胜利画面
+                if (game.level === 5) {
+                    document.getElementById('victory').style.display = 'block';
+                }
             }
         }
 
@@ -1768,13 +1425,6 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
-        
-        // 锁定横屏方向（移动端）
-        if (isMobile && screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {
-                console.log('Screen orientation lock not supported');
-            });
-        }
     </script>
 </body>
 </html>
