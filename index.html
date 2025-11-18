@@ -120,6 +120,27 @@
             color: #0f0;
             text-shadow: 0 0 30px #0f0;
         }
+        #victory {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 60px 100px;
+            border: 5px solid #ff0;
+            color: #ff0;
+            font-size: 52px;
+            text-align: center;
+            text-shadow: 0 0 40px #ff0;
+            display: none;
+            z-index: 200;
+            pointer-events: all;
+            animation: victoryPulse 2s infinite;
+        }
+        @keyframes victoryPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
         button {
             margin-top: 30px;
             padding: 20px 50px;
@@ -295,6 +316,12 @@
         <div>关卡完成！</div>
         <div style="font-size: 32px; margin-top: 20px;">准备进入下一关</div>
         <button id="nextLevelBtn">继续</button>
+    </div>
+    
+    <div id="victory">
+        <div>🎉 恭喜你通关了！🎉</div>
+        <div style="font-size: 32px; margin-top: 30px;">你击败了最终BOSS</div>
+        <div style="font-size: 24px; margin-top: 20px; color: #0f0;">感谢游玩！</div>
     </div>
     
     <div id="mobileControls">
@@ -605,10 +632,10 @@
         
         function spawnGiantBird(maxWidth, index) {
             game.enemies.push({
-                x: 800 + index * 400 + Math.random() * 200,
-                y: 80 + Math.random() * 100,
-                width: 80,
-                height: 60,
+                x: 600 + index * 600,
+                y: 120 + index * 80,
+                width: 400,
+                height: 300,
                 hp: 200,
                 maxHp: 200,
                 speed: 2.5,
@@ -619,7 +646,8 @@
                 flyFrame: 0,
                 onGround: false,
                 attacking: false,
-                diveBombCooldown: 0
+                diveBombCooldown: 3000 + index * 1000,
+                isDiving: false
             });
         }
         
@@ -645,8 +673,12 @@
                 name: '侯宇欣',
                 bulletStormCooldown: 0,
                 earthquakeCooldown: 0,
+                flameBreathCooldown: 0,
+                meteorCooldown: 5000,
                 bulletStormActive: false,
-                earthquakeActive: false
+                earthquakeActive: false,
+                flameBreathActive: false,
+                meteorActive: false
             });
         }
 
@@ -1511,6 +1543,33 @@
                         ctx.beginPath();
                         ctx.arc(e.x + e.width / 2, e.y + e.height, 250, 0, Math.PI * 2);
                         ctx.fill();
+                    }
+                    
+                    // 火焰吐息特效
+                    if (e.flameBreathActive) {
+                        ctx.fillStyle = 'rgba(255, 68, 0, 0.4)';
+                        ctx.save();
+                        ctx.translate(e.x + e.width / 2, e.y + e.height / 2);
+                        const playerAngle = Math.atan2(game.player.y - e.y, game.player.x - e.x);
+                        ctx.rotate(playerAngle);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(200, -60);
+                        ctx.lineTo(200, 60);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    
+                    // 陨石召唤特效
+                    if (e.meteorActive) {
+                        ctx.strokeStyle = '#f80';
+                        ctx.lineWidth = 5;
+                        for (let i = 0; i < 2; i++) {
+                            ctx.beginPath();
+                            ctx.arc(e.x + e.width / 2, e.y + e.height / 2, 120 + i * 40, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
                     }
                     
                     // BOSS名字（更大字体）
