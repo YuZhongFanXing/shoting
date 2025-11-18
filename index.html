@@ -10,6 +10,9 @@
             overflow: hidden; 
             font-family: 'Microsoft YaHei', sans-serif;
             background: #000;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         /* 强制横屏提示 */
@@ -223,6 +226,9 @@
             background: rgba(0, 255, 0, 0.2);
             border: 3px solid #0f0;
             border-radius: 50%;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .joystick-handle {
             position: absolute;
@@ -234,6 +240,8 @@
             background: rgba(0, 255, 0, 0.5);
             border: 2px solid #0f0;
             border-radius: 50%;
+            touch-action: none;
+            pointer-events: none;
         }
         .mobile-btn {
             position: absolute;
@@ -249,6 +257,12 @@
             align-items: center;
             justify-content: center;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .mobile-btn:active {
+            background: rgba(0, 255, 0, 0.5);
+            transform: scale(0.95);
         }
         #jumpBtn {
             bottom: 100px;
@@ -263,9 +277,9 @@
             right: 50px;
         }
         /* 移动端样式 - 只在横屏时显示控制器 */
-        @media (hover: none) and (pointer: coarse) {
+        @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
             #mobileControls {
-                display: block;
+                display: block !important;
             }
             #info {
                 font-size: 14px;
@@ -274,6 +288,13 @@
         
         /* PC端隐藏移动控制器 */
         @media (hover: hover) and (pointer: fine) {
+            #mobileControls {
+                display: none !important;
+            }
+        }
+        
+        /* 移动端竖屏时隐藏控制器 */
+        @media (max-width: 768px) and (orientation: portrait) {
             #mobileControls {
                 display: none !important;
             }
@@ -632,10 +653,10 @@
         
         function spawnGiantBird(maxWidth, index) {
             game.enemies.push({
-                x: 600 + index * 600,
-                y: 120 + index * 80,
-                width: 400,
-                height: 300,
+                x: 600 + index * 800,
+                y: 150 + index * 100,
+                width: 2000,
+                height: 1500,
                 hp: 200,
                 maxHp: 200,
                 speed: 2.5,
@@ -791,21 +812,38 @@
             
             // 触摸屏幕瞄准
             canvas.addEventListener('touchstart', (e) => {
-                if (e.target === canvas) {
-                    const touch = e.touches[0];
-                    game.mouse.x = touch.clientX + game.camera.x;
-                    game.mouse.y = touch.clientY + game.camera.y;
-                }
+                e.preventDefault();
+                const touch = e.touches[0];
+                game.mouse.x = touch.clientX + game.camera.x;
+                game.mouse.y = touch.clientY + game.camera.y;
             });
             
             canvas.addEventListener('touchmove', (e) => {
-                if (e.target === canvas) {
-                    const touch = e.touches[0];
-                    game.mouse.x = touch.clientX + game.camera.x;
-                    game.mouse.y = touch.clientY + game.camera.y;
-                }
+                e.preventDefault();
+                const touch = e.touches[0];
+                game.mouse.x = touch.clientX + game.camera.x;
+                game.mouse.y = touch.clientY + game.camera.y;
             });
         }
+        
+        // 阻止移动端双击缩放和默认触摸行为
+        document.addEventListener('touchstart', (e) => {
+            if (e.target === canvas || e.target.closest('#mobileControls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (e.target === canvas || e.target.closest('#mobileControls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchend', (e) => {
+            if (e.target === canvas || e.target.closest('#mobileControls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
 
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             game.level++;
