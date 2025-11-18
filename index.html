@@ -464,7 +464,7 @@
             }
             
             // 生成医药包（BOSS关卡更多）
-            const healthPackCount = config.boss ? 8 : 3;
+            const healthPackCount = config.boss ? 15 : 3;
             for (let i = 0; i < healthPackCount; i++) {
                 game.healthPacks.push({
                     x: 300 + Math.random() * (config.width - 600),
@@ -754,7 +754,19 @@
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             game.level++;
             document.getElementById('levelComplete').style.display = 'none';
+            // 保存当前血量和弹药
+            const currentHp = game.player.hp;
+            const currentBullets = game.weapon.bullets;
+            const currentReserve = game.weapon.reserve;
             initLevel();
+            // 恢复血量和弹药（不会满血复活）
+            game.player.hp = currentHp;
+            game.weapon.bullets = currentBullets;
+            game.weapon.reserve = currentReserve;
+            // 更新UI
+            document.getElementById('hp').textContent = game.player.hp;
+            document.getElementById('bullets').textContent = game.weapon.bullets;
+            document.getElementById('reserve').textContent = game.weapon.reserve;
         });
         
         document.getElementById('respawnBtn').addEventListener('click', () => {
@@ -1095,39 +1107,56 @@
                         }
                     }
                     
-                    // 万弹归宗技能（8秒冷却）
-                    if (enemy.bulletStormCooldown <= 0 && dist < 600) {
-                        enemy.bulletStormCooldown = 8000;
+                    // 万弹归宗技能（4秒冷却，频次更高）
+                    if (enemy.bulletStormCooldown <= 0 && dist < 800) {
+                        enemy.bulletStormCooldown = 4000;
                         enemy.bulletStormActive = true;
                         
-                        // 发射环形子弹
-                        const bulletCount = 24;
+                        // 发射更多环形子弹
+                        const bulletCount = 36;
                         for (let i = 0; i < bulletCount; i++) {
                             const angle = (Math.PI * 2 / bulletCount) * i;
                             game.enemyBullets.push({
                                 x: enemy.x + enemy.width / 2,
                                 y: enemy.y + enemy.height / 2,
-                                width: 8,
-                                height: 8,
-                                vx: Math.cos(angle) * 8,
-                                vy: Math.sin(angle) * 8,
-                                damage: 15
+                                width: 10,
+                                height: 10,
+                                vx: Math.cos(angle) * 9,
+                                vy: Math.sin(angle) * 9,
+                                damage: 18
                             });
                         }
                         
+                        // 延迟0.3秒后再发射一轮
+                        setTimeout(() => {
+                            const bulletCount2 = 36;
+                            for (let i = 0; i < bulletCount2; i++) {
+                                const angle = (Math.PI * 2 / bulletCount2) * i + Math.PI / 36;
+                                game.enemyBullets.push({
+                                    x: enemy.x + enemy.width / 2,
+                                    y: enemy.y + enemy.height / 2,
+                                    width: 10,
+                                    height: 10,
+                                    vx: Math.cos(angle) * 9,
+                                    vy: Math.sin(angle) * 9,
+                                    damage: 18
+                                });
+                            }
+                        }, 300);
+                        
                         setTimeout(() => {
                             enemy.bulletStormActive = false;
-                        }, 500);
+                        }, 800);
                     }
                     
-                    // 大地震动技能（12秒冷却）
-                    if (enemy.earthquakeCooldown <= 0 && dist < 400) {
-                        enemy.earthquakeCooldown = 12000;
+                    // 大地震动技能（10秒冷却，更频繁）
+                    if (enemy.earthquakeCooldown <= 0 && dist < 500) {
+                        enemy.earthquakeCooldown = 10000;
                         enemy.earthquakeActive = true;
                         
-                        // 屏幕震动效果
-                        const shakeIntensity = 20;
-                        const shakeDuration = 1000;
+                        // 屏幕震动效果（更强烈）
+                        const shakeIntensity = 30;
+                        const shakeDuration = 1500;
                         const shakeStart = Date.now();
                         
                         const shakeInterval = setInterval(() => {
@@ -1144,15 +1173,15 @@
                             }
                         }, 50);
                         
-                        // 对玩家造成伤害
-                        if (dist < 350 && enemy.onGround) {
-                            playerHit(25);
+                        // 对玩家造成伤害（范围更大）
+                        if (dist < 450 && enemy.onGround) {
+                            playerHit(30);
                         }
                         
-                        // 震动波特效
-                        for (let i = 0; i < 30; i++) {
+                        // 震动波特效（更多粒子）
+                        for (let i = 0; i < 50; i++) {
                             createParticle(
-                                enemy.x + enemy.width / 2 + (Math.random() - 0.5) * 200,
+                                enemy.x + enemy.width / 2 + (Math.random() - 0.5) * 300,
                                 enemy.y + enemy.height,
                                 '#a52'
                             );
@@ -1363,46 +1392,46 @@
                 if (e.type === 'boss') {
                     ctx.fillStyle = '#800';
                     
-                    // 身体（更大）
-                    ctx.fillRect(e.x + 30, e.y + 90, 120, 180);
+                    // 身体（更大 - 2倍）
+                    ctx.fillRect(e.x + 60, e.y + 180, 240, 360);
                     
-                    // 头部（更大）
+                    // 头部（更大 - 2倍）
                     ctx.beginPath();
-                    ctx.arc(e.x + 90, e.y + 60, 50, 0, Math.PI * 2);
+                    ctx.arc(e.x + 180, e.y + 120, 100, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // 腿
-                    const bossLegOffset = Math.sin(e.walkFrame) * 8;
-                    ctx.fillRect(e.x + 45, e.y + 270, 30, 30 - bossLegOffset);
-                    ctx.fillRect(e.x + 105, e.y + 270, 30, 30 + bossLegOffset);
+                    // 腿（更大 - 2倍）
+                    const bossLegOffset = Math.sin(e.walkFrame) * 16;
+                    ctx.fillRect(e.x + 90, e.y + 540, 60, 60 - bossLegOffset);
+                    ctx.fillRect(e.x + 210, e.y + 540, 60, 60 + bossLegOffset);
                     
-                    // 手臂
-                    ctx.fillRect(e.x + 8, e.y + 120, 22, 90);
-                    ctx.fillRect(e.x + 150, e.y + 120, 22, 90);
+                    // 手臂（更大 - 2倍）
+                    ctx.fillRect(e.x + 16, e.y + 240, 44, 180);
+                    ctx.fillRect(e.x + 300, e.y + 240, 44, 180);
                     
-                    // 锤子（攻击时挥动）
+                    // 锤子（攻击时挥动，更大 - 2倍）
                     if (e.attacking) {
                         ctx.fillStyle = '#666';
                         const hammerAngle = -Math.PI / 4 * e.hammerSwing;
                         ctx.save();
-                        ctx.translate(e.x + 15, e.y + 210);
+                        ctx.translate(e.x + 30, e.y + 420);
                         ctx.rotate(hammerAngle);
-                        ctx.fillRect(-15, -60, 30, 75);
-                        ctx.fillRect(-20, -70, 40, 20);
+                        ctx.fillRect(-30, -120, 60, 150);
+                        ctx.fillRect(-40, -140, 80, 40);
                         ctx.restore();
                     } else {
                         ctx.fillStyle = '#666';
-                        ctx.fillRect(e.x - 8, e.y + 150, 22, 60);
-                        ctx.fillRect(e.x - 15, e.y + 143, 36, 22);
+                        ctx.fillRect(e.x - 16, e.y + 300, 44, 120);
+                        ctx.fillRect(e.x - 30, e.y + 286, 72, 44);
                     }
                     
-                    // 技能释放特效
+                    // 技能释放特效（更大范围）
                     if (e.bulletStormActive) {
                         ctx.strokeStyle = '#f0f';
-                        ctx.lineWidth = 4;
-                        for (let i = 0; i < 3; i++) {
+                        ctx.lineWidth = 6;
+                        for (let i = 0; i < 4; i++) {
                             ctx.beginPath();
-                            ctx.arc(e.x + e.width / 2, e.y + e.height / 2, 60 + i * 30, 0, Math.PI * 2);
+                            ctx.arc(e.x + e.width / 2, e.y + e.height / 2, 100 + i * 50, 0, Math.PI * 2);
                             ctx.stroke();
                         }
                     }
@@ -1410,24 +1439,29 @@
                     if (e.earthquakeActive) {
                         ctx.fillStyle = 'rgba(165, 85, 34, 0.5)';
                         ctx.beginPath();
-                        ctx.arc(e.x + e.width / 2, e.y + e.height, 150, 0, Math.PI * 2);
+                        ctx.arc(e.x + e.width / 2, e.y + e.height, 250, 0, Math.PI * 2);
                         ctx.fill();
                     }
                     
-                    // BOSS名字
+                    // BOSS名字（更大字体）
                     ctx.fillStyle = '#f00';
-                    ctx.font = 'bold 28px monospace';
+                    ctx.font = 'bold 48px monospace';
                     ctx.textAlign = 'center';
-                    ctx.fillText(e.name, e.x + e.width / 2, e.y - 40);
+                    ctx.fillText(e.name, e.x + e.width / 2, e.y - 60);
                     
-                    // 血条
+                    // 血条（更大更粗）
                     ctx.fillStyle = '#300';
-                    ctx.fillRect(e.x, e.y - 30, e.width, 15);
+                    ctx.fillRect(e.x, e.y - 50, e.width, 25);
                     ctx.fillStyle = '#f00';
-                    ctx.fillRect(e.x, e.y - 30, e.width * (e.hp / e.maxHp), 15);
+                    ctx.fillRect(e.x, e.y - 50, e.width * (e.hp / e.maxHp), 25);
                     ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(e.x, e.y - 30, e.width, 15);
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(e.x, e.y - 50, e.width, 25);
+                    
+                    // 血量数值显示
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 20px monospace';
+                    ctx.fillText(`${Math.ceil(e.hp)}/${e.maxHp}`, e.x + e.width / 2, e.y - 28);
                 } else if (e.type === 'bird') {
                     ctx.fillStyle = '#888';
                     const wingOffset = Math.sin(e.flyFrame) * 5;
