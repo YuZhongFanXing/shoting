@@ -241,7 +241,8 @@
             bottom: 30px;
             right: 50px;
         }
-        @media (max-width: 768px) {
+        /* 移动端样式 - 只在横屏时显示控制器 */
+        @media (hover: none) and (pointer: coarse) {
             #mobileControls {
                 display: block;
             }
@@ -249,9 +250,22 @@
                 font-size: 14px;
             }
         }
+        
+        /* PC端隐藏移动控制器 */
+        @media (hover: hover) and (pointer: fine) {
+            #mobileControls {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
+    <div id="orientationWarning">
+        <div class="rotate-icon">📱↻</div>
+        <div>请将设备横屏以获得最佳游戏体验</div>
+        <div style="font-size: 18px; margin-top: 20px; color: #888;">Rotate your device to landscape mode</div>
+    </div>
+    
     <div id="nameInput">
         <h2>末世废土</h2>
         <div style="color: #0f0; margin-bottom: 20px;">请输入你的昵称</div>
@@ -588,11 +602,11 @@
         function spawnBoss(maxWidth) {
             game.enemies.push({
                 x: maxWidth / 2,
-                y: canvas.height - 350,
-                width: 180,
-                height: 300,
-                hp: 800,
-                maxHp: 800,
+                y: canvas.height - 600,
+                width: 360,
+                height: 600,
+                hp: 2400,
+                maxHp: 2400,
                 speed: 2.5,
                 damage: 30,
                 type: 'boss',
@@ -601,7 +615,7 @@
                 onGround: false,
                 attacking: false,
                 attackCooldown: 0,
-                attackRange: 250,
+                attackRange: 300,
                 hammerSwing: 0,
                 walkFrame: 0,
                 name: '侯宇欣',
@@ -629,8 +643,8 @@
             if (e.key.toLowerCase() === 'r') reload();
         });
         
-        // 移动端触控支持
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // 移动端触控支持 - 使用更准确的检测方法
+        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         
         if (isMobile) {
             // 虚拟摇杆
@@ -1553,6 +1567,13 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
+        
+        // 锁定横屏方向（移动端）
+        if (isMobile && screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {
+                console.log('Screen orientation lock not supported');
+            });
+        }
     </script>
 </body>
 </html>
