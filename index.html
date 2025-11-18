@@ -1096,6 +1096,10 @@
                             if (enemy.type === 'boss') {
                                 game.enemiesKilled++;
                                 updateEnemyCount();
+                            } else if (game.level !== 5) {
+                                // 非BOSS关卡的所有敌人都计入击杀数
+                                game.enemiesKilled++;
+                                updateEnemyCount();
                             }
                             
                             if (game.enemiesKilled >= game.totalEnemies) {
@@ -1161,11 +1165,13 @@
                             }
                             
                             game.enemies.splice(i, 1);
-                            // 只有BOSS才计入击杀数
+                            // 修复：所有非BOSS关卡的敌人都计入击杀数
                             if (enemy.type === 'boss') {
                                 game.enemiesKilled++;
-                                updateEnemyCount();
+                            } else if (game.level !== 5) {
+                                game.enemiesKilled++;
                             }
+                            updateEnemyCount();
 
                             if (game.enemiesKilled >= game.totalEnemies) {
                                 game.gate.open = true;
