@@ -10,48 +10,7 @@
             overflow: hidden; 
             font-family: 'Microsoft YaHei', sans-serif;
             background: #000;
-            touch-action: none;
-            -webkit-user-select: none;
             user-select: none;
-        }
-        
-        /* 强制横屏提示 */
-        #orientationWarning {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            color: #0f0;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 9999;
-            font-size: 24px;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        #orientationWarning .rotate-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            animation: rotate 2s infinite;
-        }
-        
-        @keyframes rotate {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
-        }
-        
-        @media (max-width: 768px) and (orientation: portrait) {
-            #orientationWarning {
-                display: flex !important;
-            }
-            #gameCanvas, #hud, #nameInput, #respawn, #levelComplete, #mobileControls {
-                display: none !important;
-            }
         }
         
         #gameCanvas { 
@@ -207,107 +166,73 @@
             background: #0f0;
             color: #000;
         }
-        #mobileControls {
+        #storyDialog {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 200px;
-            display: none;
-            pointer-events: all;
-            z-index: 100;
-        }
-        .joystick {
-            position: absolute;
-            bottom: 30px;
-            left: 50px;
-            width: 120px;
-            height: 120px;
-            background: rgba(0, 255, 0, 0.2);
-            border: 3px solid #0f0;
-            border-radius: 50%;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .joystick-handle {
-            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 255, 0, 0.5);
-            border: 2px solid #0f0;
-            border-radius: 50%;
-            touch-action: none;
-            pointer-events: none;
-        }
-        .mobile-btn {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-            background: rgba(0, 255, 0, 0.3);
-            border: 3px solid #0f0;
-            border-radius: 50%;
-            color: #0f0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px 60px;
+            border: 4px solid #ff0;
+            color: #ff0;
             font-size: 24px;
+            text-align: center;
+            text-shadow: 0 0 20px #ff0;
+            display: none;
+            z-index: 300;
+            pointer-events: all;
+            max-width: 800px;
+        }
+        #storyDialog h3 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #f00;
+        }
+        #storyDialog button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #ff0;
+            color: #000;
+        }
+        #bossWarning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.8);
+            color: #fff;
+            font-size: 72px;
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
+            text-align: center;
+            display: none;
+            z-index: 250;
+            animation: warningFlash 0.5s infinite;
         }
-        .mobile-btn:active {
-            background: rgba(0, 255, 0, 0.5);
-            transform: scale(0.95);
+        @keyframes warningFlash {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
         }
-        #jumpBtn {
-            bottom: 100px;
-            right: 50px;
-        }
-        #shootBtn {
-            bottom: 30px;
-            right: 140px;
-        }
-        #reloadBtn {
-            bottom: 30px;
-            right: 50px;
-        }
-        /* 移动端样式 - 只在横屏时显示控制器 */
-        @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
-            #mobileControls {
-                display: block !important;
-            }
-            #info {
-                font-size: 14px;
-            }
-        }
-        
-        /* PC端隐藏移动控制器 */
-        @media (hover: hover) and (pointer: fine) {
-            #mobileControls {
-                display: none !important;
-            }
-        }
-        
-        /* 移动端竖屏时隐藏控制器 */
-        @media (max-width: 768px) and (orientation: portrait) {
-            #mobileControls {
-                display: none !important;
-            }
+        #upgradeNotice {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 50px;
+            border: 4px solid #0ff;
+            color: #0ff;
+            font-size: 36px;
+            text-align: center;
+            text-shadow: 0 0 30px #0ff;
+            display: none;
+            z-index: 300;
+            pointer-events: all;
         }
     </style>
 </head>
 <body>
-    <div id="orientationWarning">
-        <div class="rotate-icon">📱↻</div>
-        <div>请将设备横屏以获得最佳游戏体验</div>
-        <div style="font-size: 18px; margin-top: 20px; color: #888;">Rotate your device to landscape mode</div>
-    </div>
-    
     <div id="nameInput">
         <h2>末世废土</h2>
         <div style="color: #0f0; margin-bottom: 20px;">请输入你的昵称</div>
@@ -315,6 +240,27 @@
         <br>
         <button onclick="startGame()">开始游戏</button>
     </div>
+    
+    <div id="storyDialog">
+        <h3 id="storyTitle">剧情</h3>
+        <div id="storyText"></div>
+        <button id="storyBtn" onclick="closeStory()">继续</button>
+    </div>
+    
+    <div id="bossWarning">
+        <div style="margin-top: 40vh;">
+            <div id="warningText">小BOSS降临！</div>
+            <div style="font-size: 36px; margin-top: 20px;" id="bossName">贪念之魔</div>
+        </div>
+    </div>
+    
+    <div id="upgradeNotice">
+        <div>🎉 玩家升级！🎉</div>
+        <div style="font-size: 24px; margin-top: 20px;">获得技能：攻击回血</div>
+        <div style="font-size: 18px; margin-top: 10px; color: #0f0;">每次攻击敌人回复2点血量</div>
+        <button onclick="closeUpgrade()">确定</button>
+    </div>
+    
     <canvas id="gameCanvas" style="display:none;"></canvas>
     <div id="hud" style="display:none;">
         <div id="info">AD移动 | W跳跃 | 鼠标瞄准射击 | R换弹(1秒)</div>
@@ -344,15 +290,6 @@
         <div style="font-size: 32px; margin-top: 30px;">你击败了最终BOSS</div>
         <div style="font-size: 24px; margin-top: 20px; color: #0f0;">感谢游玩！</div>
     </div>
-    
-    <div id="mobileControls">
-        <div class="joystick" id="joystick">
-            <div class="joystick-handle" id="joystickHandle"></div>
-        </div>
-        <div class="mobile-btn" id="jumpBtn">跳</div>
-        <div class="mobile-btn" id="shootBtn">射</div>
-        <div class="mobile-btn" id="reloadBtn">R</div>
-    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -361,6 +298,7 @@
         canvas.height = window.innerHeight;
 
         let playerName = '';
+        let hasLifeSteal = false;
         
         function startGame() {
             const input = document.getElementById('playerName').value.trim();
@@ -372,8 +310,43 @@
             document.getElementById('nameInput').style.display = 'none';
             document.getElementById('gameCanvas').style.display = 'block';
             document.getElementById('hud').style.display = 'block';
-            initLevel();
-            gameLoop();
+            showStory('开场', '末世废土空间，由侯宇欣负面情绪所化。击败关卡的敌人，就是击败负面情绪。准备好了吗？', () => {
+                initLevel();
+                gameLoop();
+            });
+        }
+
+        function showStory(title, text, callback) {
+            document.getElementById('storyTitle').textContent = title;
+            document.getElementById('storyText').textContent = text;
+            document.getElementById('storyDialog').style.display = 'block';
+            document.getElementById('storyBtn').onclick = () => {
+                closeStory();
+                if (callback) callback();
+            };
+        }
+        
+        function closeStory() {
+            document.getElementById('storyDialog').style.display = 'none';
+        }
+        
+        function showBossWarning(bossName, callback) {
+            document.getElementById('warningText').textContent = '小BOSS降临！';
+            document.getElementById('bossName').textContent = bossName;
+            document.getElementById('bossWarning').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('bossWarning').style.display = 'none';
+                if (callback) callback();
+            }, 3000);
+        }
+        
+        function showUpgrade() {
+            document.getElementById('upgradeNotice').style.display = 'block';
+        }
+        
+        function closeUpgrade() {
+            document.getElementById('upgradeNotice').style.display = 'none';
+            hasLifeSteal = true;
         }
 
         const game = {
@@ -422,15 +395,10 @@
             mouse: { x: 0, y: 0 },
             gameOver: false,
             levelComplete: false,
-            mobile: {
-                joystickActive: false,
-                joystickX: 0,
-                joystickY: 0,
-                shooting: false
-            }
+            firstBossEncounter: false,
+            miniBossSpawned: false
         };
 
-        // 关卡配置
         const levels = [
             { enemies: 5, platforms: 3, obstacles: 5, width: 2000, birds: 2 },
             { enemies: 8, platforms: 6, obstacles: 10, width: 2500, birds: 3 },
@@ -451,10 +419,11 @@
             game.explosives = [];
             game.ammoDrops = [];
             game.companions = [];
+            game.miniBossSpawned = false;
             
-            // BOSS关卡只需要击败BOSS，不需要击败飞鸟
             if (config.boss) {
-                game.totalEnemies = 1; // 只有BOSS
+                game.totalEnemies = 1;
+                showStory('终极决战', '预警！终极BOSS降临，请准备！', () => {});
             } else {
                 game.totalEnemies = config.enemies + config.birds;
             }
@@ -463,39 +432,35 @@
             game.levelComplete = false;
             game.gameOver = false;
             
-            // 重置玩家状态
             game.player.x = 100;
             game.player.y = canvas.height - 150;
-            game.player.hp = game.player.maxHp;
+            if (game.level === 1) {
+                game.player.hp = game.player.maxHp;
+            }
             game.player.vx = 0;
             game.player.vy = 0;
             game.player.onGround = false;
             game.player.invincible = false;
             
-            // 重置武器
             game.weapon.bullets = game.weapon.maxBullets;
             game.weapon.reserve = 90;
             game.weapon.reloading = false;
             
-            // 重置相机
             game.camera.x = 0;
             game.camera.y = 0;
             game.camera.shakeX = 0;
             game.camera.shakeY = 0;
             
-            // 更新UI
             document.getElementById('hp').textContent = game.player.hp;
             document.getElementById('bullets').textContent = game.weapon.bullets;
             document.getElementById('reserve').textContent = game.weapon.reserve;
 
-            // 地面
             game.platforms.push({
                 x: 0, y: canvas.height - 50,
                 width: config.width, height: 50,
                 color: '#2a2a2a'
             });
 
-            // 平台（更复杂）
             for (let i = 0; i < config.platforms; i++) {
                 const platformY = canvas.height - 150 - Math.random() * 250;
                 game.platforms.push({
@@ -507,7 +472,6 @@
                 });
             }
 
-            // 障碍物（废墟）
             for (let i = 0; i < config.obstacles; i++) {
                 game.obstacles.push({
                     x: 200 + Math.random() * (config.width - 400),
@@ -518,7 +482,6 @@
                 });
             }
             
-            // 生成医药包 - BOSS关卡有8个医药包
             const healthPackCount = config.boss ? 8 : 3;
             for (let i = 0; i < healthPackCount; i++) {
                 game.healthPacks.push({
@@ -530,7 +493,6 @@
                 });
             }
             
-            // 生成炸药包（3关及以后）
             if (game.level >= 3) {
                 const explosiveCount = Math.min(game.level - 2, 5);
                 for (let i = 0; i < explosiveCount; i++) {
@@ -545,7 +507,6 @@
                 }
             }
             
-            // 生成随从（从第2关开始，每关增加1个，最多3个）
             if (game.level >= 2) {
                 const companionCount = Math.min(game.level - 1, 3);
                 for (let i = 0; i < companionCount; i++) {
@@ -566,16 +527,12 @@
                 }
             }
 
-            // 生成敌人或BOSS
             if (config.boss) {
-                // BOSS关卡
                 spawnBoss(config.width);
-                // 生成两只巨型飞鸟（保留）
                 for (let i = 0; i < 2; i++) {
                     spawnGiantBird(config.width, i);
                 }
             } else {
-                // 普通关卡
                 for (let i = 0; i < config.enemies; i++) {
                     spawnEnemy(config.width);
                 }
@@ -583,9 +540,14 @@
                 for (let i = 0; i < config.birds; i++) {
                     spawnBird(config.width);
                 }
+                
+                if (game.level === 1 && !game.firstBossEncounter) {
+                    setTimeout(() => {
+                        spawnFirstBossEncounter(config.width);
+                    }, 3000);
+                }
             }
 
-            // 关卡门（右侧）
             game.gate = {
                 x: config.width - 100,
                 y: canvas.height - 200,
@@ -596,6 +558,94 @@
 
             document.getElementById('level').textContent = game.level;
             updateEnemyCount();
+        }
+        
+        function spawnFirstBossEncounter(maxWidth) {
+            if (game.firstBossEncounter) return;
+            game.firstBossEncounter = true;
+            
+            const flyingBoss = {
+                x: maxWidth - 200,
+                y: 100,
+                width: 180,
+                height: 300,
+                hp: 1,
+                maxHp: 1,
+                speed: 3,
+                damage: 50,
+                type: 'flyingBoss',
+                vx: -2,
+                vy: 0,
+                attacking: false,
+                missilesFired: 0,
+                name: '侯宇欣'
+            };
+            
+            game.enemies.push(flyingBoss);
+            
+            setTimeout(() => {
+                if (flyingBoss.hp > 0) {
+                    for (let i = 0; i < 4; i++) {
+                        setTimeout(() => {
+                            const angle = Math.atan2(
+                                game.player.y - flyingBoss.y,
+                                game.player.x - flyingBoss.x
+                            ) + (i - 1.5) * 0.3;
+                            
+                            game.enemyBullets.push({
+                                x: flyingBoss.x,
+                                y: flyingBoss.y + flyingBoss.height / 2,
+                                width: 30,
+                                height: 30,
+                                vx: Math.cos(angle) * 8,
+                                vy: Math.sin(angle) * 8,
+                                damage: 25,
+                                type: 'missile'
+                            });
+                        }, i * 200);
+                    }
+                    
+                    setTimeout(() => {
+                        showStory('侯宇欣的嘲讽', '哈哈哈！想杀我？先过了这四关吧！', () => {
+                            const index = game.enemies.indexOf(flyingBoss);
+                            if (index > -1) {
+                                game.enemies.splice(index, 1);
+                            }
+                        });
+                    }, 1000);
+                }
+            }, 3000);
+        }
+        
+        function spawnMiniBoss(type, x, y) {
+            const bossNames = { greed: '贪念之魔', anger: '愤怒之魔', ignorance: '愚痴之魔' };
+            const bossName = bossNames[type];
+            
+            showBossWarning(bossName, () => {
+                const miniBoss = {
+                    x: x,
+                    y: type === 'ignorance' ? y - 100 : y,
+                    width: 180,
+                    height: 300,
+                    hp: 800,
+                    maxHp: 800,
+                    speed: 2,
+                    damage: 20,
+                    type: 'miniBoss',
+                    subType: type,
+                    vx: 0,
+                    vy: 0,
+                    onGround: type !== 'ignorance',
+                    attacking: false,
+                    attackCooldown: 0,
+                    walkFrame: 0,
+                    name: bossName,
+                    specialCooldown: 0,
+                    flyFrame: 0
+                };
+                
+                game.enemies.push(miniBoss);
+            });
         }
 
         function spawnEnemy(maxWidth) {
@@ -661,20 +711,21 @@
             game.enemies.push({
                 x: 600 + index * 800,
                 y: 150 + index * 100,
-                width: 2000,
-                height: 1500,
-                hp: 200,
-                maxHp: 200,
-                speed: 2.5,
-                damage: 20,
+                width: 200,
+                height: 150,
+                hp: 300,
+                maxHp: 300,
+                speed: 3,
+                damage: 25,
                 type: 'giantBird',
                 vx: (Math.random() - 0.5) * 3,
                 vy: 0,
                 flyFrame: 0,
                 onGround: false,
                 attacking: false,
-                diveBombCooldown: 3000 + index * 1000,
-                isDiving: false
+                diveBombCooldown: 0,
+                isDiving: false,
+                lastDive: 0
             });
         }
         
@@ -699,13 +750,7 @@
                 walkFrame: 0,
                 name: '侯宇欣',
                 bulletStormCooldown: 0,
-                earthquakeCooldown: 0,
-                flameBreathCooldown: 0,
-                meteorCooldown: 5000,
-                bulletStormActive: false,
-                earthquakeActive: false,
-                flameBreathActive: false,
-                meteorActive: false
+                earthquakeCooldown: 0
             });
         }
 
@@ -714,7 +759,6 @@
                 `${game.enemiesKilled}/${game.totalEnemies}`;
         }
 
-        // 输入处理
         window.addEventListener('keydown', e => game.keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', e => game.keys[e.key.toLowerCase()] = false);
         window.addEventListener('mousemove', e => {
@@ -725,145 +769,22 @@
         window.addEventListener('keydown', e => {
             if (e.key.toLowerCase() === 'r') reload();
         });
-        
-        // 移动端触控支持 - 使用更准确的检测方法
-        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        
-        if (isMobile) {
-            // 虚拟摇杆
-            const joystick = document.getElementById('joystick');
-            const joystickHandle = document.getElementById('joystickHandle');
-            let joystickTouch = null;
-            
-            joystick.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                joystickTouch = e.touches[0].identifier;
-                game.mobile.joystickActive = true;
-                updateJoystick(e.touches[0]);
-            });
-            
-            joystick.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                for (let touch of e.touches) {
-                    if (touch.identifier === joystickTouch) {
-                        updateJoystick(touch);
-                        break;
-                    }
-                }
-            });
-            
-            joystick.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                game.mobile.joystickActive = false;
-                game.mobile.joystickX = 0;
-                game.mobile.joystickY = 0;
-                joystickHandle.style.transform = 'translate(-50%, -50%)';
-            });
-            
-            function updateJoystick(touch) {
-                const rect = joystick.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const deltaX = touch.clientX - centerX;
-                const deltaY = touch.clientY - centerY;
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                const maxDistance = 35;
-                
-                if (distance > maxDistance) {
-                    const angle = Math.atan2(deltaY, deltaX);
-                    game.mobile.joystickX = Math.cos(angle);
-                    game.mobile.joystickY = Math.sin(angle);
-                    joystickHandle.style.transform = `translate(calc(-50% + ${Math.cos(angle) * maxDistance}px), calc(-50% + ${Math.sin(angle) * maxDistance}px))`;
-                } else {
-                    game.mobile.joystickX = deltaX / maxDistance;
-                    game.mobile.joystickY = deltaY / maxDistance;
-                    joystickHandle.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
-                }
-            }
-            
-            // 跳跃按钮
-            document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (game.player.onGround) {
-                    game.player.vy = -game.player.jumpPower;
-                    game.player.onGround = false;
-                }
-            });
-            
-            // 射击按钮
-            const shootBtn = document.getElementById('shootBtn');
-            shootBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                game.mobile.shooting = true;
-                shoot();
-            });
-            
-            shootBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                game.mobile.shooting = false;
-            });
-            
-            // 持续射击
-            setInterval(() => {
-                if (game.mobile.shooting) {
-                    shoot();
-                }
-            }, 150);
-            
-            // 换弹按钮
-            document.getElementById('reloadBtn').addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                reload();
-            });
-            
-            // 触摸屏幕瞄准
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                game.mouse.x = touch.clientX + game.camera.x;
-                game.mouse.y = touch.clientY + game.camera.y;
-            });
-            
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                game.mouse.x = touch.clientX + game.camera.x;
-                game.mouse.y = touch.clientY + game.camera.y;
-            });
-        }
-        
-        // 阻止移动端双击缩放和默认触摸行为
-        document.addEventListener('touchstart', (e) => {
-            if (e.target === canvas || e.target.closest('#mobileControls')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (e.target === canvas || e.target.closest('#mobileControls')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        document.addEventListener('touchend', (e) => {
-            if (e.target === canvas || e.target.closest('#mobileControls')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
 
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             game.level++;
             document.getElementById('levelComplete').style.display = 'none';
-            // 保存当前血量和弹药
+            
+            if (game.level === 5) {
+                showUpgrade();
+            }
+            
             const currentHp = game.player.hp;
             const currentBullets = game.weapon.bullets;
             const currentReserve = game.weapon.reserve;
             initLevel();
-            // 恢复血量和弹药（不会满血复活）
             game.player.hp = currentHp;
             game.weapon.bullets = currentBullets;
             game.weapon.reserve = currentReserve;
-            // 更新UI
             document.getElementById('hp').textContent = game.player.hp;
             document.getElementById('bullets').textContent = game.weapon.bullets;
             document.getElementById('reserve').textContent = game.weapon.reserve;
@@ -899,7 +820,6 @@
                 damage: game.weapon.damage
             });
 
-            // 枪口火焰
             for (let i = 0; i < 8; i++) {
                 createParticle(
                     game.player.x + game.player.width / 2,
@@ -983,27 +903,19 @@
 
             const gravity = 0.8;
 
-            // 玩家移动（键盘 + 移动端摇杆）
             game.player.vx = 0;
             
-            if (game.mobile.joystickActive) {
-                if (Math.abs(game.mobile.joystickX) > 0.2) {
-                    game.player.vx = game.mobile.joystickX * game.player.speed;
-                    game.player.facing = game.mobile.joystickX > 0 ? 1 : -1;
-                }
-            } else {
-                if (game.keys['a']) {
-                    game.player.vx = -game.player.speed;
-                    game.player.facing = -1;
-                }
-                if (game.keys['d']) {
-                    game.player.vx = game.player.speed;
-                    game.player.facing = 1;
-                }
-                if (game.keys['w'] && game.player.onGround) {
-                    game.player.vy = -game.player.jumpPower;
-                    game.player.onGround = false;
-                }
+            if (game.keys['a']) {
+                game.player.vx = -game.player.speed;
+                game.player.facing = -1;
+            }
+            if (game.keys['d']) {
+                game.player.vx = game.player.speed;
+                game.player.facing = 1;
+            }
+            if (game.keys['w'] && game.player.onGround) {
+                game.player.vy = -game.player.jumpPower;
+                game.player.onGround = false;
             }
 
             game.player.vy += gravity;
@@ -1092,12 +1004,10 @@
                         
                         if (dist < explosive.radius) {
                             game.enemies.splice(i, 1);
-                            // 只有BOSS才计入击杀数
-                            if (enemy.type === 'boss') {
+                            if (enemy.type === 'boss' || enemy.type === 'miniBoss') {
                                 game.enemiesKilled++;
                                 updateEnemyCount();
                             } else if (game.level !== 5) {
-                                // 非BOSS关卡的所有敌人都计入击杀数
                                 game.enemiesKilled++;
                                 updateEnemyCount();
                             }
@@ -1149,6 +1059,12 @@
                         enemy.hp -= bullet.damage;
                         showDamage(enemy.x + enemy.width / 2, enemy.y, bullet.damage);
 
+                        // 攻击回血技能
+                        if (hasLifeSteal) {
+                            game.player.hp = Math.min(game.player.maxHp, game.player.hp + 2);
+                            document.getElementById('hp').textContent = game.player.hp;
+                        }
+
                         for (let j = 0; j < 5; j++) {
                             createParticle(bullet.x, bullet.y, '#ff0000');
                         }
@@ -1165,8 +1081,7 @@
                             }
                             
                             game.enemies.splice(i, 1);
-                            // 修复：所有非BOSS关卡的敌人都计入击杀数
-                            if (enemy.type === 'boss') {
+                            if (enemy.type === 'boss' || enemy.type === 'miniBoss') {
                                 game.enemiesKilled++;
                             } else if (game.level !== 5) {
                                 game.enemiesKilled++;
@@ -1188,6 +1103,21 @@
                 return bullet.x > 0 && bullet.x < 10000 && bullet.y > 0 && bullet.y < canvas.height;
             });
 
+            // 检查是否需要生成小BOSS
+            if (!game.miniBossSpawned && game.level >= 2 && game.level <= 4) {
+                const normalEnemiesKilled = game.enemiesKilled - (game.enemies.filter(e => e.type === 'miniBoss').length);
+                const normalEnemiesTotal = game.totalEnemies;
+                
+                if (normalEnemiesKilled >= normalEnemiesTotal) {
+                    game.miniBossSpawned = true;
+                    const bossTypes = ['greed', 'anger', 'ignorance'];
+                    const bossType = bossTypes[game.level - 2];
+                    spawnMiniBoss(bossType, canvas.width / 2, canvas.height - 350);
+                    game.totalEnemies++; // 增加总敌人数
+                    updateEnemyCount();
+                }
+            }
+
             game.enemies.forEach(enemy => {
                 if (enemy.type === 'boss') {
                     enemy.vy += gravity;
@@ -1196,13 +1126,11 @@
                     const dy = game.player.y - enemy.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     
-                    // BOSS移动
                     if (dist > enemy.attackRange) {
                         enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
                         enemy.attacking = false;
                     } else {
                         enemy.vx = 0;
-                        // BOSS近战攻击
                         if (enemy.attackCooldown <= 0) {
                             enemy.attacking = true;
                             enemy.hammerSwing = 1;
@@ -1219,12 +1147,9 @@
                         }
                     }
                     
-                    // 万弹归宗技能（4秒冷却，频次更高）
                     if (enemy.bulletStormCooldown <= 0 && dist < 800) {
                         enemy.bulletStormCooldown = 4000;
-                        enemy.bulletStormActive = true;
                         
-                        // 发射更多环形子弹
                         const bulletCount = 36;
                         for (let i = 0; i < bulletCount; i++) {
                             const angle = (Math.PI * 2 / bulletCount) * i;
@@ -1238,35 +1163,11 @@
                                 damage: 18
                             });
                         }
-                        
-                        // 延迟0.3秒后再发射一轮
-                        setTimeout(() => {
-                            const bulletCount2 = 36;
-                            for (let i = 0; i < bulletCount2; i++) {
-                                const angle = (Math.PI * 2 / bulletCount2) * i + Math.PI / 36;
-                                game.enemyBullets.push({
-                                    x: enemy.x + enemy.width / 2,
-                                    y: enemy.y + enemy.height / 2,
-                                    width: 10,
-                                    height: 10,
-                                    vx: Math.cos(angle) * 9,
-                                    vy: Math.sin(angle) * 9,
-                                    damage: 18
-                                });
-                            }
-                        }, 300);
-                        
-                        setTimeout(() => {
-                            enemy.bulletStormActive = false;
-                        }, 800);
                     }
                     
-                    // 大地震动技能（10秒冷却，更频繁）
                     if (enemy.earthquakeCooldown <= 0 && dist < 500) {
                         enemy.earthquakeCooldown = 10000;
-                        enemy.earthquakeActive = true;
                         
-                        // 屏幕震动效果（更强烈）
                         const shakeIntensity = 30;
                         const shakeDuration = 1500;
                         const shakeStart = Date.now();
@@ -1277,7 +1178,6 @@
                                 clearInterval(shakeInterval);
                                 game.camera.shakeX = 0;
                                 game.camera.shakeY = 0;
-                                enemy.earthquakeActive = false;
                             } else {
                                 const progress = 1 - (elapsed / shakeDuration);
                                 game.camera.shakeX = (Math.random() - 0.5) * shakeIntensity * progress;
@@ -1285,12 +1185,10 @@
                             }
                         }, 50);
                         
-                        // 对玩家造成伤害（范围更大）
                         if (dist < 450 && enemy.onGround) {
                             playerHit(30);
                         }
                         
-                        // 震动波特效（更多粒子）
                         for (let i = 0; i < 50; i++) {
                             createParticle(
                                 enemy.x + enemy.width / 2 + (Math.random() - 0.5) * 300,
@@ -1321,6 +1219,148 @@
                             }
                         }
                     });
+                } else if (enemy.type === 'miniBoss') {
+                    const dx = game.player.x - enemy.x;
+                    const dy = game.player.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (enemy.subType === 'ignorance') {
+                        // 愚痴之魔 - 飞行BOSS
+                        enemy.flyFrame += 0.15;
+                        
+                        if (Math.abs(dx) > 100) {
+                            enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
+                        }
+                        if (Math.abs(dy) > 50) {
+                            enemy.vy = dy > 0 ? enemy.speed * 0.5 : -enemy.speed * 0.5;
+                        }
+                        
+                        enemy.x += enemy.vx;
+                        enemy.y += enemy.vy;
+                        enemy.vx *= 0.98;
+                        enemy.vy *= 0.98;
+                        
+                        // 特殊技能：混乱弹幕
+                        if (enemy.specialCooldown <= 0 && dist < 400) {
+                            enemy.specialCooldown = 3000;
+                            for (let i = 0; i < 12; i++) {
+                                const angle = (Math.PI * 2 / 12) * i + Math.random() * 0.5;
+                                game.enemyBullets.push({
+                                    x: enemy.x + enemy.width / 2,
+                                    y: enemy.y + enemy.height / 2,
+                                    width: 8,
+                                    height: 8,
+                                    vx: Math.cos(angle) * 6,
+                                    vy: Math.sin(angle) * 6,
+                                    damage: 15
+                                });
+                            }
+                        }
+                    } else {
+                        // 贪念之魔和愤怒之魔 - 地面BOSS
+                        enemy.vy += gravity;
+                        
+                        if (Math.abs(dx) > 50) {
+                            enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
+                        } else {
+                            enemy.vx = 0;
+                        }
+                        
+                        enemy.x += enemy.vx;
+                        enemy.y += enemy.vy;
+                        
+                        enemy.onGround = false;
+                        game.platforms.forEach(platform => {
+                            if (checkCollision(enemy, platform)) {
+                                if (enemy.vy > 0) {
+                                    enemy.y = platform.y - enemy.height;
+                                    enemy.vy = 0;
+                                    enemy.onGround = true;
+                                }
+                            }
+                        });
+                        
+                        if (enemy.subType === 'greed') {
+                            // 贪念之魔特殊技能：金币弹幕
+                            if (enemy.specialCooldown <= 0 && dist < 300) {
+                                enemy.specialCooldown = 2500;
+                                for (let i = 0; i < 8; i++) {
+                                    const angle = Math.atan2(dy, dx) + (i - 3.5) * 0.2;
+                                    game.enemyBullets.push({
+                                        x: enemy.x + enemy.width / 2,
+                                        y: enemy.y + enemy.height / 2,
+                                        width: 10,
+                                        height: 10,
+                                        vx: Math.cos(angle) * 8,
+                                        vy: Math.sin(angle) * 8,
+                                        damage: 18
+                                    });
+                                }
+                            }
+                        } else if (enemy.subType === 'anger') {
+                            // 愤怒之魔特殊技能：冲锋攻击
+                            if (enemy.specialCooldown <= 0 && dist < 200 && dist > 80) {
+                                enemy.specialCooldown = 4000;
+                                enemy.vx = dx > 0 ? enemy.speed * 3 : -enemy.speed * 3;
+                                setTimeout(() => {
+                                    enemy.vx *= 0.3;
+                                }, 800);
+                            }
+                        }
+                    }
+                    
+                    enemy.specialCooldown -= 16;
+                    
+                    if (checkCollision(enemy, game.player) && !enemy.attacking) {
+                        enemy.attacking = true;
+                        playerHit(enemy.damage);
+                        setTimeout(() => enemy.attacking = false, 500);
+                    }
+                } else if (enemy.type === 'giantBird') {
+                    enemy.flyFrame += 0.15;
+                    const dy = game.player.y - enemy.y;
+                    const dx = game.player.x - enemy.x;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // 频繁俯冲攻击
+                    const now = Date.now();
+                    if (now - enemy.lastDive > 4000 && dist < 500) {
+                        enemy.lastDive = now;
+                        enemy.isDiving = true;
+                        enemy.diveBombCooldown = 4000;
+                        
+                        const diveAngle = Math.atan2(dy, dx);
+                        enemy.vx = Math.cos(diveAngle) * 12;
+                        enemy.vy = Math.sin(diveAngle) * 12;
+                        
+                        setTimeout(() => {
+                            enemy.isDiving = false;
+                        }, 1000);
+                    } else if (!enemy.isDiving) {
+                        if (Math.abs(dx) > 150) {
+                            enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
+                        }
+                        if (Math.abs(dy) > 80) {
+                            enemy.vy = dy > 0 ? enemy.speed * 0.6 : -enemy.speed * 0.6;
+                        }
+                    }
+                    
+                    enemy.x += enemy.vx;
+                    enemy.y += enemy.vy;
+                    
+                    if (!enemy.isDiving) {
+                        enemy.vx *= 0.96;
+                        enemy.vy *= 0.96;
+                    }
+                    
+                    if (checkCollision(enemy, game.player) && !enemy.attacking) {
+                        enemy.attacking = true;
+                        playerHit(enemy.damage);
+                        setTimeout(() => enemy.attacking = false, 500);
+                    }
+                } else if (enemy.type === 'flyingBoss') {
+                    enemy.x += enemy.vx;
+                    enemy.y += enemy.vy;
                 } else if (enemy.type === 'bird') {
                     enemy.flyFrame += 0.2;
                     const dy = game.player.y - enemy.y;
@@ -1342,52 +1382,6 @@
                         enemy.attacking = true;
                         playerHit(enemy.damage);
                         setTimeout(() => enemy.attacking = false, 100);
-                    }
-                } else if (enemy.type === 'giantBird') {
-                    // 巨型飞鸟AI
-                    enemy.flyFrame += 0.15;
-                    const dy = game.player.y - enemy.y;
-                    const dx = game.player.x - enemy.x;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // 俯冲轰炸技能（5秒冷却）
-                    if (enemy.diveBombCooldown <= 0 && dist < 500 && Math.abs(dx) < 200) {
-                        enemy.diveBombCooldown = 5000;
-                        enemy.isDiving = true;
-                        
-                        // 快速俯冲
-                        const diveAngle = Math.atan2(dy, dx);
-                        enemy.vx = Math.cos(diveAngle) * 12;
-                        enemy.vy = Math.sin(diveAngle) * 12;
-                        
-                        setTimeout(() => {
-                            enemy.isDiving = false;
-                        }, 1000);
-                    } else if (!enemy.isDiving) {
-                        // 正常飞行
-                        if (Math.abs(dx) > 150) {
-                            enemy.vx = dx > 0 ? enemy.speed : -enemy.speed;
-                        }
-                        if (Math.abs(dy) > 80) {
-                            enemy.vy = dy > 0 ? enemy.speed * 0.6 : -enemy.speed * 0.6;
-                        }
-                    }
-                    
-                    enemy.x += enemy.vx;
-                    enemy.y += enemy.vy;
-                    
-                    if (!enemy.isDiving) {
-                        enemy.vx *= 0.96;
-                        enemy.vy *= 0.96;
-                    }
-                    
-                    enemy.diveBombCooldown -= 16;
-                    
-                    // 碰撞攻击
-                    if (checkCollision(enemy, game.player) && !enemy.attacking) {
-                        enemy.attacking = true;
-                        playerHit(enemy.damage);
-                        setTimeout(() => enemy.attacking = false, 500);
                     }
                 } else {
                     enemy.vy += gravity;
@@ -1463,7 +1457,6 @@
                 game.levelComplete = true;
                 document.getElementById('levelComplete').style.display = 'block';
                 
-                // 如果这是BOSS关卡，显示胜利画面
                 if (game.level === 5) {
                     document.getElementById('victory').style.display = 'block';
                 }
@@ -1555,24 +1548,19 @@
                 if (e.type === 'boss') {
                     ctx.fillStyle = '#800';
                     
-                    // 身体（更大 - 2倍）
                     ctx.fillRect(e.x + 60, e.y + 180, 240, 360);
                     
-                    // 头部（更大 - 2倍）
                     ctx.beginPath();
                     ctx.arc(e.x + 180, e.y + 120, 100, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // 腿（更大 - 2倍）
                     const bossLegOffset = Math.sin(e.walkFrame) * 16;
                     ctx.fillRect(e.x + 90, e.y + 540, 60, 60 - bossLegOffset);
                     ctx.fillRect(e.x + 210, e.y + 540, 60, 60 + bossLegOffset);
                     
-                    // 手臂（更大 - 2倍）
                     ctx.fillRect(e.x + 16, e.y + 240, 44, 180);
                     ctx.fillRect(e.x + 300, e.y + 240, 44, 180);
                     
-                    // 锤子（攻击时挥动，更大 - 2倍）
                     if (e.attacking) {
                         ctx.fillStyle = '#666';
                         const hammerAngle = -Math.PI / 4 * e.hammerSwing;
@@ -1588,58 +1576,11 @@
                         ctx.fillRect(e.x - 30, e.y + 286, 72, 44);
                     }
                     
-                    // 技能释放特效（更大范围）
-                    if (e.bulletStormActive) {
-                        ctx.strokeStyle = '#f0f';
-                        ctx.lineWidth = 6;
-                        for (let i = 0; i < 4; i++) {
-                            ctx.beginPath();
-                            ctx.arc(e.x + e.width / 2, e.y + e.height / 2, 100 + i * 50, 0, Math.PI * 2);
-                            ctx.stroke();
-                        }
-                    }
-                    
-                    if (e.earthquakeActive) {
-                        ctx.fillStyle = 'rgba(165, 85, 34, 0.5)';
-                        ctx.beginPath();
-                        ctx.arc(e.x + e.width / 2, e.y + e.height, 250, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                    // 火焰吐息特效
-                    if (e.flameBreathActive) {
-                        ctx.fillStyle = 'rgba(255, 68, 0, 0.4)';
-                        ctx.save();
-                        ctx.translate(e.x + e.width / 2, e.y + e.height / 2);
-                        const playerAngle = Math.atan2(game.player.y - e.y, game.player.x - e.x);
-                        ctx.rotate(playerAngle);
-                        ctx.beginPath();
-                        ctx.moveTo(0, 0);
-                        ctx.lineTo(200, -60);
-                        ctx.lineTo(200, 60);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.restore();
-                    }
-                    
-                    // 陨石召唤特效
-                    if (e.meteorActive) {
-                        ctx.strokeStyle = '#f80';
-                        ctx.lineWidth = 5;
-                        for (let i = 0; i < 2; i++) {
-                            ctx.beginPath();
-                            ctx.arc(e.x + e.width / 2, e.y + e.height / 2, 120 + i * 40, 0, Math.PI * 2);
-                            ctx.stroke();
-                        }
-                    }
-                    
-                    // BOSS名字（更大字体）
                     ctx.fillStyle = '#f00';
                     ctx.font = 'bold 48px monospace';
                     ctx.textAlign = 'center';
                     ctx.fillText(e.name, e.x + e.width / 2, e.y - 60);
                     
-                    // 血条（更大更粗）
                     ctx.fillStyle = '#300';
                     ctx.fillRect(e.x, e.y - 50, e.width, 25);
                     ctx.fillStyle = '#f00';
@@ -1648,10 +1589,50 @@
                     ctx.lineWidth = 3;
                     ctx.strokeRect(e.x, e.y - 50, e.width, 25);
                     
-                    // 血量数值显示
                     ctx.fillStyle = '#fff';
                     ctx.font = 'bold 20px monospace';
                     ctx.fillText(`${Math.ceil(e.hp)}/${e.maxHp}`, e.x + e.width / 2, e.y - 28);
+                } else if (e.type === 'miniBoss') {
+                    const colors = { greed: '#ff0', anger: '#f00', ignorance: '#80f' };
+                    ctx.fillStyle = colors[e.subType];
+                    
+                    ctx.fillRect(e.x + 30, e.y + 90, 120, 180);
+                    
+                    ctx.beginPath();
+                    ctx.arc(e.x + 90, e.y + 60, 50, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    if (e.subType !== 'ignorance') {
+                        const legOffset = Math.sin(e.walkFrame) * 8;
+                        ctx.fillRect(e.x + 45, e.y + 270, 30, 30 - legOffset);
+                        ctx.fillRect(e.x + 105, e.y + 270, 30, 30 + legOffset);
+                    }
+                    
+                    ctx.fillRect(e.x + 8, e.y + 120, 22, 90);
+                    ctx.fillRect(e.x + 150, e.y + 120, 22, 90);
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 24px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(e.name, e.x + e.width / 2, e.y - 30);
+                    
+                    ctx.fillStyle = '#300';
+                    ctx.fillRect(e.x, e.y - 25, e.width, 15);
+                    ctx.fillStyle = colors[e.subType];
+                    ctx.fillRect(e.x, e.y - 25, e.width * (e.hp / e.maxHp), 15);
+                } else if (e.type === 'flyingBoss') {
+                    ctx.fillStyle = '#800';
+                    
+                    ctx.fillRect(e.x + 30, e.y + 90, 120, 180);
+                    
+                    ctx.beginPath();
+                    ctx.arc(e.x + 90, e.y + 60, 50, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#f00';
+                    ctx.font = 'bold 24px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(e.name, e.x + e.width / 2, e.y - 30);
                 } else if (e.type === 'bird') {
                     ctx.fillStyle = '#888';
                     const wingOffset = Math.sin(e.flyFrame) * 5;
@@ -1670,37 +1651,31 @@
                     ctx.fillStyle = '#f00';
                     ctx.fillRect(e.x, e.y - 8, e.width * (e.hp / e.maxHp), 4);
                 } else if (e.type === 'giantBird') {
-                    // 巨型飞鸟绘制
                     ctx.fillStyle = '#444';
                     
-                    // 身体
-                    ctx.fillRect(e.x + 800, e.y + 700, 400, 200);
+                    ctx.fillRect(e.x + 80, e.y + 70, 40, 20);
                     
-                    // 头部
                     ctx.beginPath();
-                    ctx.arc(e.x + 1000, e.y + 600, 150, 0, Math.PI * 2);
+                    ctx.arc(e.x + 100, e.y + 60, 15, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // 翅膀
-                    const wingOffset = Math.sin(e.flyFrame) * 50;
-                    ctx.fillRect(e.x + 400, e.y + 750 + wingOffset, 400, 80);
-                    ctx.fillRect(e.x + 1200, e.y + 750 - wingOffset, 400, 80);
+                    const wingOffset = Math.sin(e.flyFrame) * 15;
+                    ctx.fillRect(e.x + 40, e.y + 75 + wingOffset, 40, 8);
+                    ctx.fillRect(e.x + 120, e.y + 75 - wingOffset, 40, 8);
                     
-                    // 眼睛
                     ctx.fillStyle = '#f00';
                     ctx.beginPath();
-                    ctx.arc(e.x + 950, e.y + 600, 30, 0, Math.PI * 2);
+                    ctx.arc(e.x + 95, e.y + 60, 3, 0, Math.PI * 2);
                     ctx.fill();
                     
                     ctx.beginPath();
-                    ctx.arc(e.x + 1050, e.y + 600, 30, 0, Math.PI * 2);
+                    ctx.arc(e.x + 105, e.y + 60, 3, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // 血条
                     ctx.fillStyle = '#300';
-                    ctx.fillRect(e.x + 700, e.y + 500, 600, 25);
+                    ctx.fillRect(e.x + 70, e.y + 50, 60, 8);
                     ctx.fillStyle = '#f00';
-                    ctx.fillRect(e.x + 700, e.y + 500, 600 * (e.hp / e.maxHp), 25);
+                    ctx.fillRect(e.x + 70, e.y + 50, 60 * (e.hp / e.maxHp), 8);
                 } else {
                     const color = e.type === 'gunner' ? '#0af' : (e.type === 'heavy' ? '#f80' : '#f00');
                     const size = e.type === 'heavy' ? 1.2 : 1;
@@ -1781,10 +1756,18 @@
             });
             
             game.enemyBullets.forEach(b => {
-                ctx.fillStyle = '#f0f';
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
-                ctx.fill();
+                if (b.type === 'missile') {
+                    ctx.fillStyle = '#f0f';
+                    ctx.fillRect(b.x - 15, b.y - 15, 30, 30);
+                    ctx.strokeStyle = '#f0f';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(b.x - 15, b.y - 15, 30, 30);
+                } else {
+                    ctx.fillStyle = '#f0f';
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             });
 
             game.bullets.forEach(b => {
@@ -1823,13 +1806,6 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
-        
-        // 锁定横屏方向（移动端）
-        if (isMobile && screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {
-                console.log('Screen orientation lock not supported');
-            });
-        }
     </script>
 </body>
 </html>
