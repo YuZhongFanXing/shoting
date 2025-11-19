@@ -263,10 +263,11 @@
     
     <canvas id="gameCanvas" style="display:none;"></canvas>
     <div id="hud" style="display:none;">
-        <div id="info">AD移动 | W跳跃 | 鼠标瞄准射击 | R换弹(1秒)</div>
+        <div id="info">AD移动 | W跳跃 | 鼠标瞄准射击 | R换弹(1秒) | <span id="missileInfo" style="display:none;">Q导弹技能(15秒)</span></div>
         <div id="stats">
             生命: <span id="hp">100</span><br>
-            弹药: <span id="bullets">30</span>/<span id="reserve">90</span>
+            弹药: <span id="bullets">30</span>/<span id="reserve">90</span><br>
+            <span id="missileStatus" style="display:none;">导弹: <span id="missileReady">就绪</span></span>
         </div>
         <div id="levelInfo">
             关卡: <span id="level">1</span><br>
@@ -299,6 +300,8 @@
 
         let playerName = '';
         let hasLifeSteal = false;
+        let hasMissileSkill = false;
+        let missileLastUsed = 0;
         
         function startGame() {
             const input = document.getElementById('playerName').value.trim();
@@ -388,6 +391,8 @@
             explosives: [],
             ammoDrops: [],
             companions: [],
+            meteors: [],
+            playerMissiles: [],
             gate: null,
             totalEnemies: 0,
             enemiesKilled: 0,
@@ -400,11 +405,11 @@
         };
 
         const levels = [
-            { enemies: 5, platforms: 3, obstacles: 5, width: 2000, birds: 2 },
-            { enemies: 8, platforms: 6, obstacles: 10, width: 2500, birds: 3 },
-            { enemies: 12, platforms: 9, obstacles: 15, width: 3000, birds: 4 },
-            { enemies: 15, platforms: 12, obstacles: 20, width: 3500, birds: 5 },
-            { enemies: 0, platforms: 20, obstacles: 5, width: 3000, birds: 0, boss: true }
+            { enemies: 10, platforms: 3, obstacles: 5, width: 4000, birds: 4 },
+            { enemies: 16, platforms: 6, obstacles: 10, width: 5000, birds: 6 },
+            { enemies: 24, platforms: 9, obstacles: 15, width: 6000, birds: 8 },
+            { enemies: 30, platforms: 12, obstacles: 20, width: 7000, birds: 10 },
+            { enemies: 0, platforms: 20, obstacles: 5, width: 6000, birds: 0, boss: true }
         ];
 
         function initLevel() {
@@ -419,6 +424,8 @@
             game.explosives = [];
             game.ammoDrops = [];
             game.companions = [];
+            game.meteors = [];
+            game.playerMissiles = [];
             game.miniBossSpawned = false;
             
             if (config.boss) {
@@ -436,6 +443,8 @@
             game.player.y = canvas.height - 150;
             if (game.level === 1) {
                 game.player.hp = game.player.maxHp;
+            } else {
+                game.player.hp = 20; // 复活时只有20血量
             }
             game.player.vx = 0;
             game.player.vy = 0;
@@ -482,7 +491,7 @@
                 });
             }
             
-            const healthPackCount = config.boss ? 8 : 3;
+            const healthPackCount = config.boss ? 12 : Math.floor(4.5);
             for (let i = 0; i < healthPackCount; i++) {
                 game.healthPacks.push({
                     x: 300 + Math.random() * (config.width - 600),
@@ -565,56 +574,26 @@
             game.firstBossEncounter = true;
             
             const flyingBoss = {
-                x: maxWidth - 200,
+                x: 50, // 在地图最左侧生成
                 y: 100,
                 width: 180,
                 height: 300,
-                hp: 1,
-                maxHp: 1,
+                hp: 999999, // 无限血量
+                maxHp: 999999,
                 speed: 3,
                 damage: 50,
                 type: 'flyingBoss',
-                vx: -2,
+                vx: 2, // 朝着玩家方向飞行
                 vy: 0,
                 attacking: false,
                 missilesFired: 0,
-                name: '侯宇欣'
+                meteorsFired: 0,
+                hasEncountered: false,
+                name: '侯宇欣',
+                invulnerable: true // 无敌状态
             };
             
             game.enemies.push(flyingBoss);
-            
-            setTimeout(() => {
-                if (flyingBoss.hp > 0) {
-                    for (let i = 0; i < 4; i++) {
-                        setTimeout(() => {
-                            const angle = Math.atan2(
-                                game.player.y - flyingBoss.y,
-                                game.player.x - flyingBoss.x
-                            ) + (i - 1.5) * 0.3;
-                            
-                            game.enemyBullets.push({
-                                x: flyingBoss.x,
-                                y: flyingBoss.y + flyingBoss.height / 2,
-                                width: 30,
-                                height: 30,
-                                vx: Math.cos(angle) * 8,
-                                vy: Math.sin(angle) * 8,
-                                damage: 25,
-                                type: 'missile'
-                            });
-                        }, i * 200);
-                    }
-                    
-                    setTimeout(() => {
-                        showStory('侯宇欣的嘲讽', '哈哈哈！想杀我？先过了这四关吧！', () => {
-                            const index = game.enemies.indexOf(flyingBoss);
-                            if (index > -1) {
-                                game.enemies.splice(index, 1);
-                            }
-                        });
-                    }, 1000);
-                }
-            }, 3000);
         }
         
         function spawnMiniBoss(type, x, y) {
@@ -641,7 +620,10 @@
                     walkFrame: 0,
                     name: bossName,
                     specialCooldown: 0,
-                    flyFrame: 0
+                    flyFrame: 0,
+                    meteorCooldown: 0,
+                    skill2Cooldown: 0,
+                    skill3Cooldown: 0
                 };
                 
                 game.enemies.push(miniBoss);
@@ -750,7 +732,8 @@
                 walkFrame: 0,
                 name: '侯宇欣',
                 bulletStormCooldown: 0,
-                earthquakeCooldown: 0
+                earthquakeCooldown: 0,
+                meteorCooldown: 0
             });
         }
 
@@ -768,11 +751,21 @@
         window.addEventListener('mousedown', () => shoot());
         window.addEventListener('keydown', e => {
             if (e.key.toLowerCase() === 'r') reload();
+            if (e.key.toLowerCase() === 'q') fireMissile();
         });
 
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             game.level++;
             document.getElementById('levelComplete').style.display = 'none';
+            
+            if (game.level === 3) {
+                // 通过第二关解锁导弹技能
+                hasMissileSkill = true;
+                document.getElementById('missileInfo').style.display = 'inline';
+                document.getElementById('missileStatus').style.display = 'block';
+                showStory('技能解锁', '恭喜！你解锁了导弹技能！按Q键发射导弹，命中敌人会产生爆炸效果。冷却时间15秒。', () => {});
+                setTimeout(() => closeStory(), 3000);
+            }
             
             if (game.level === 5) {
                 showUpgrade();
@@ -846,6 +839,50 @@
             }, 1000);
         }
 
+        function fireMissile() {
+            if (!hasMissileSkill || game.gameOver || game.levelComplete) return;
+            
+            const now = Date.now();
+            if (now - missileLastUsed < 15000) return; // 15秒冷却
+            
+            missileLastUsed = now;
+            
+            // 更新UI显示冷却状态
+            document.getElementById('missileReady').textContent = '冷却中';
+            document.getElementById('missileReady').style.color = '#f00';
+            
+            setTimeout(() => {
+                document.getElementById('missileReady').textContent = '就绪';
+                document.getElementById('missileReady').style.color = '#0f0';
+            }, 15000);
+            
+            // 发射导弹
+            const angle = Math.atan2(
+                game.mouse.y - game.player.y,
+                game.mouse.x - game.player.x
+            );
+            
+            game.playerMissiles.push({
+                x: game.player.x + game.player.width / 2,
+                y: game.player.y + game.player.height / 2,
+                width: 20,
+                height: 8,
+                vx: Math.cos(angle) * 12,
+                vy: Math.sin(angle) * 12,
+                damage: 100,
+                explosionRadius: 120
+            });
+            
+            // 发射特效
+            for (let i = 0; i < 15; i++) {
+                createParticle(
+                    game.player.x + game.player.width / 2,
+                    game.player.y + game.player.height / 2,
+                    '#ff6600'
+                );
+            }
+        }
+
         function createParticle(x, y, color) {
             game.particles.push({
                 x, y,
@@ -888,6 +925,32 @@
                 game.gameOver = true;
                 document.getElementById('currentLevel').textContent = game.level;
                 document.getElementById('respawn').style.display = 'block';
+            }
+        }
+
+        function spawnMeteors(count) {
+            const screenWidth = canvas.width;
+            const meteorSpacing = screenWidth / (count + 1) * 1.3; // 增加0.3倍间距
+            
+            for (let i = 0; i < count; i++) {
+                const startX = game.camera.x + meteorSpacing * (i + 1) + (Math.random() - 0.5) * 100;
+                const startY = -100;
+                const targetX = startX + (Math.random() - 0.5) * 200;
+                const targetY = canvas.height - 50;
+                
+                const angle = Math.atan2(targetY - startY, targetX - startX);
+                
+                game.meteors.push({
+                    x: startX,
+                    y: startY,
+                    width: 40,
+                    height: 40,
+                    vx: Math.cos(angle) * 8,
+                    vy: Math.sin(angle) * 8,
+                    damage: 30, // 修改伤害为30
+                    rotation: 0,
+                    trail: []
+                });
             }
         }
 
@@ -1033,6 +1096,147 @@
 
             game.camera.x = Math.max(0, game.player.x - canvas.width / 3);
 
+            // 更新陨石
+            game.meteors = game.meteors.filter(meteor => {
+                meteor.x += meteor.vx;
+                meteor.y += meteor.vy;
+                meteor.rotation += 0.2;
+                
+                // 添加拖尾效果
+                meteor.trail.push({ x: meteor.x, y: meteor.y, life: 10 });
+                meteor.trail = meteor.trail.filter(t => {
+                    t.life--;
+                    return t.life > 0;
+                });
+                
+                // 检查与玩家碰撞
+                if (checkCollision(meteor, game.player)) {
+                    playerHit(meteor.damage);
+                    
+                    // 爆炸效果
+                    for (let i = 0; i < 15; i++) {
+                        createParticle(meteor.x + meteor.width / 2, meteor.y + meteor.height / 2, '#f80');
+                    }
+                    return false;
+                }
+                
+                // 检查是否落地
+                if (meteor.y > canvas.height - 50) {
+                    // 爆炸效果
+                    for (let i = 0; i < 20; i++) {
+                        createParticle(meteor.x + meteor.width / 2, meteor.y + meteor.height / 2, '#f80');
+                    }
+                    return false;
+                }
+                
+                return meteor.y < canvas.height + 100;
+            });
+
+            // 更新玩家导弹
+            game.playerMissiles = game.playerMissiles.filter(missile => {
+                missile.x += missile.vx;
+                missile.y += missile.vy;
+                
+                // 检查与敌人碰撞
+                for (let i = game.enemies.length - 1; i >= 0; i--) {
+                    const enemy = game.enemies[i];
+                    if (checkCollision(missile, enemy)) {
+                        // 爆炸效果
+                        const explosionCenter = {
+                            x: missile.x + missile.width / 2,
+                            y: missile.y + missile.height / 2
+                        };
+                        
+                        // 对范围内所有敌人造成伤害
+                        for (let j = game.enemies.length - 1; j >= 0; j--) {
+                            const targetEnemy = game.enemies[j];
+                            const enemyCenter = {
+                                x: targetEnemy.x + targetEnemy.width / 2,
+                                y: targetEnemy.y + targetEnemy.height / 2
+                            };
+                            const dx = enemyCenter.x - explosionCenter.x;
+                            const dy = enemyCenter.y - explosionCenter.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (dist < missile.explosionRadius) {
+                                // 第一关侯宇欣无敌，不受导弹伤害
+                                if (targetEnemy.type === 'flyingBoss' && targetEnemy.invulnerable) {
+                                    showDamage(targetEnemy.x + targetEnemy.width / 2, targetEnemy.y, 0);
+                                    continue;
+                                }
+                                
+                                targetEnemy.hp -= missile.damage;
+                                showDamage(targetEnemy.x + targetEnemy.width / 2, targetEnemy.y, missile.damage);
+                                
+                                // 攻击回血技能
+                                if (hasLifeSteal) {
+                                    const healAmount = game.level === 5 ? 1 : 2;
+                                    game.player.hp = Math.min(game.player.maxHp, game.player.hp + healAmount);
+                                    document.getElementById('hp').textContent = game.player.hp;
+                                }
+                                
+                                if (targetEnemy.hp <= 0) {
+                                    // BOSS复活机制
+                                    if (targetEnemy.type === 'boss' && !targetEnemy.hasRevived) {
+                                        targetEnemy.hasRevived = true;
+                                        targetEnemy.hp = targetEnemy.maxHp / 2;
+                                        
+                                        for (let k = 0; k < 30; k++) {
+                                            createParticle(targetEnemy.x + targetEnemy.width / 2, targetEnemy.y + targetEnemy.height / 2, '#ff0');
+                                        }
+                                        
+                                        showStory('BOSS复活', '侯宇欣：哈哈哈！你以为这样就能击败我吗？', () => {});
+                                        setTimeout(() => closeStory(), 2000);
+                                    } else {
+                                        if (Math.random() > 0.5) {
+                                            game.ammoDrops.push({
+                                                x: targetEnemy.x + targetEnemy.width / 2 - 15,
+                                                y: targetEnemy.y + targetEnemy.height / 2 - 15,
+                                                width: 30,
+                                                height: 30,
+                                                ammo: 15
+                                            });
+                                        }
+                                        
+                                        game.enemies.splice(j, 1);
+                                        if (targetEnemy.type === 'boss' || targetEnemy.type === 'miniBoss') {
+                                            game.enemiesKilled++;
+                                        } else if (game.level !== 5) {
+                                            game.enemiesKilled++;
+                                        }
+                                        updateEnemyCount();
+                                        
+                                        if (game.enemiesKilled >= game.totalEnemies) {
+                                            game.gate.open = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 爆炸粒子效果
+                        for (let k = 0; k < 50; k++) {
+                            createParticle(explosionCenter.x, explosionCenter.y, '#ff6600');
+                        }
+                        
+                        return false; // 移除导弹
+                    }
+                }
+                
+                // 检查与障碍物碰撞
+                for (let obstacle of game.obstacles) {
+                    if (checkCollision(missile, obstacle)) {
+                        // 爆炸效果
+                        for (let k = 0; k < 30; k++) {
+                            createParticle(missile.x + missile.width / 2, missile.y + missile.height / 2, '#ff6600');
+                        }
+                        return false;
+                    }
+                }
+                
+                return missile.x > -100 && missile.x < 10000 && missile.y > -100 && missile.y < canvas.height + 100;
+            });
+
             game.enemyBullets = game.enemyBullets.filter(bullet => {
                 bullet.x += bullet.vx;
                 bullet.y += bullet.vy;
@@ -1056,12 +1260,23 @@
                 for (let i = game.enemies.length - 1; i >= 0; i--) {
                     const enemy = game.enemies[i];
                     if (checkCollision(bullet, enemy)) {
+                        // 第一关侯宇欣无敌，不受伤害
+                        if (enemy.type === 'flyingBoss' && enemy.invulnerable) {
+                            // 显示无效伤害
+                            showDamage(enemy.x + enemy.width / 2, enemy.y, 0);
+                            for (let j = 0; j < 5; j++) {
+                                createParticle(bullet.x, bullet.y, '#888');
+                            }
+                            return false;
+                        }
+                        
                         enemy.hp -= bullet.damage;
                         showDamage(enemy.x + enemy.width / 2, enemy.y, bullet.damage);
 
                         // 攻击回血技能
                         if (hasLifeSteal) {
-                            game.player.hp = Math.min(game.player.maxHp, game.player.hp + 2);
+                            const healAmount = game.level === 5 ? 1 : 2;
+                            game.player.hp = Math.min(game.player.maxHp, game.player.hp + healAmount);
                             document.getElementById('hp').textContent = game.player.hp;
                         }
 
@@ -1070,26 +1285,40 @@
                         }
 
                         if (enemy.hp <= 0) {
-                            if (Math.random() > 0.5) {
-                                game.ammoDrops.push({
-                                    x: enemy.x + enemy.width / 2 - 15,
-                                    y: enemy.y + enemy.height / 2 - 15,
-                                    width: 30,
-                                    height: 30,
-                                    ammo: 15
-                                });
-                            }
-                            
-                            game.enemies.splice(i, 1);
-                            if (enemy.type === 'boss' || enemy.type === 'miniBoss') {
-                                game.enemiesKilled++;
-                            } else if (game.level !== 5) {
-                                game.enemiesKilled++;
-                            }
-                            updateEnemyCount();
+                            // BOSS复活机制
+                            if (enemy.type === 'boss' && !enemy.hasRevived) {
+                                enemy.hasRevived = true;
+                                enemy.hp = enemy.maxHp / 2; // 复活到半血
+                                
+                                // 复活特效
+                                for (let j = 0; j < 30; j++) {
+                                    createParticle(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ff0');
+                                }
+                                
+                                showStory('BOSS复活', '侯宇欣：哈哈哈！你以为这样就能击败我吗？', () => {});
+                                setTimeout(() => closeStory(), 2000);
+                            } else {
+                                if (Math.random() > 0.5) {
+                                    game.ammoDrops.push({
+                                        x: enemy.x + enemy.width / 2 - 15,
+                                        y: enemy.y + enemy.height / 2 - 15,
+                                        width: 30,
+                                        height: 30,
+                                        ammo: 15
+                                    });
+                                }
+                                
+                                game.enemies.splice(i, 1);
+                                if (enemy.type === 'boss' || enemy.type === 'miniBoss') {
+                                    game.enemiesKilled++;
+                                } else if (game.level !== 5) {
+                                    game.enemiesKilled++;
+                                }
+                                updateEnemyCount();
 
-                            if (game.enemiesKilled >= game.totalEnemies) {
-                                game.gate.open = true;
+                                if (game.enemiesKilled >= game.totalEnemies) {
+                                    game.gate.open = true;
+                                }
                             }
                         }
                         return false;
@@ -1112,7 +1341,7 @@
                     game.miniBossSpawned = true;
                     const bossTypes = ['greed', 'anger', 'ignorance'];
                     const bossType = bossTypes[game.level - 2];
-                    spawnMiniBoss(bossType, canvas.width / 2, canvas.height - 350);
+                    spawnMiniBoss(bossType, game.gate.x, game.gate.y); // 在门处生成
                     game.totalEnemies++; // 增加总敌人数
                     updateEnemyCount();
                 }
@@ -1166,7 +1395,7 @@
                     }
                     
                     if (enemy.earthquakeCooldown <= 0 && dist < 500) {
-                        enemy.earthquakeCooldown = 10000;
+                        enemy.earthquakeCooldown = 3000; // 大幅减少冷却时间
                         
                         const shakeIntensity = 30;
                         const shakeDuration = 1500;
@@ -1198,9 +1427,16 @@
                         }
                     }
                     
+                    // BOSS陨石技能（任何时候都可以触发）
+                    if (enemy.meteorCooldown <= 0 && dist < 600) {
+                        enemy.meteorCooldown = 3000; // 任何时候都可以使用
+                        spawnMeteors(8);
+                    }
+                    
                     enemy.attackCooldown -= 16;
                     enemy.bulletStormCooldown -= 16;
                     enemy.earthquakeCooldown -= 16;
+                    enemy.meteorCooldown -= 16;
                     
                     enemy.x += enemy.vx;
                     enemy.y += enemy.vy;
@@ -1281,9 +1517,9 @@
                         });
                         
                         if (enemy.subType === 'greed') {
-                            // 贪念之魔特殊技能：金币弹幕
-                            if (enemy.specialCooldown <= 0 && dist < 300) {
-                                enemy.specialCooldown = 2500;
+                            // 贪念之魔技能1：金币弹幕（更频繁）
+                            if (enemy.specialCooldown <= 0 && dist < 350) {
+                                enemy.specialCooldown = 1500; // 减少冷却时间
                                 for (let i = 0; i < 8; i++) {
                                     const angle = Math.atan2(dy, dx) + (i - 3.5) * 0.2;
                                     game.enemyBullets.push({
@@ -1297,6 +1533,39 @@
                                     });
                                 }
                             }
+                            
+                            // 贪念之魔技能2：金币雨
+                            if (enemy.skill2Cooldown <= 0 && dist < 400) {
+                                enemy.skill2Cooldown = 3000;
+                                for (let i = 0; i < 12; i++) {
+                                    setTimeout(() => {
+                                        game.enemyBullets.push({
+                                            x: game.player.x + (Math.random() - 0.5) * 200,
+                                            y: -50,
+                                            width: 8,
+                                            height: 8,
+                                            vx: 0,
+                                            vy: 8,
+                                            damage: 15
+                                        });
+                                    }, i * 100);
+                                }
+                            }
+                            
+                            // 贪念之魔技能3：吸血攻击
+                            if (enemy.skill3Cooldown <= 0 && dist < 150) {
+                                enemy.skill3Cooldown = 4000;
+                                playerHit(25);
+                                enemy.hp = Math.min(enemy.maxHp, enemy.hp + 50);
+                                
+                                // 吸血特效
+                                for (let i = 0; i < 15; i++) {
+                                    createParticle(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#f00');
+                                }
+                            }
+                            
+                            enemy.skill2Cooldown -= 16;
+                            enemy.skill3Cooldown -= 16;
                         } else if (enemy.subType === 'anger') {
                             // 愤怒之魔特殊技能：冲锋攻击
                             if (enemy.specialCooldown <= 0 && dist < 200 && dist > 80) {
@@ -1306,6 +1575,13 @@
                                     enemy.vx *= 0.3;
                                 }, 800);
                             }
+                            
+                            // 愤怒之魔陨石技能
+                            if (enemy.meteorCooldown <= 0 && dist < 400) {
+                                enemy.meteorCooldown = 8000;
+                                spawnMeteors(6);
+                            }
+                            enemy.meteorCooldown -= 16;
                         }
                     }
                     
@@ -1361,6 +1637,54 @@
                 } else if (enemy.type === 'flyingBoss') {
                     enemy.x += enemy.vx;
                     enemy.y += enemy.vy;
+                    
+                    // 检查是否遇见玩家
+                    const dx = game.player.x - enemy.x;
+                    const dy = game.player.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 300 && !enemy.hasEncountered) {
+                        enemy.hasEncountered = true;
+                        
+                        // 立即发射第一次陨石攻击
+                        setTimeout(() => {
+                            spawnMeteors(4);
+                        }, 100);
+                        
+                        // 发射4枚导弹
+                        for (let i = 0; i < 4; i++) {
+                            setTimeout(() => {
+                                const currentDx = game.player.x - enemy.x;
+                                const currentDy = game.player.y - enemy.y;
+                                const angle = Math.atan2(currentDy, currentDx) + (i - 1.5) * 0.3;
+                                game.enemyBullets.push({
+                                    x: enemy.x + enemy.width / 2,
+                                    y: enemy.y + enemy.height / 2,
+                                    width: 30,
+                                    height: 30,
+                                    vx: Math.cos(angle) * 8,
+                                    vy: Math.sin(angle) * 8,
+                                    damage: 25,
+                                    type: 'missile'
+                                });
+                            }, i * 300);
+                        }
+                        
+                        // 2秒后第二次陨石攻击
+                        setTimeout(() => {
+                            spawnMeteors(4);
+                        }, 2000);
+                        
+                        // 3秒后嘲讽并离开
+                        setTimeout(() => {
+                            showStory('侯宇欣的嘲讽', '侯宇欣：哈哈哈！想杀我？你还太嫩了！先过了这四关再说吧！记住，我在最后一关等着你！', () => {
+                                const index = game.enemies.indexOf(enemy);
+                                if (index > -1) {
+                                    game.enemies.splice(index, 1);
+                                }
+                            });
+                        }, 3000);
+                    }
                 } else if (enemy.type === 'bird') {
                     enemy.flyFrame += 0.2;
                     const dy = game.player.y - enemy.y;
@@ -1629,10 +1953,26 @@
                     ctx.arc(e.x + 90, e.y + 60, 50, 0, Math.PI * 2);
                     ctx.fill();
                     
+                    // 无敌光环效果
+                    if (e.invulnerable) {
+                        ctx.strokeStyle = '#ff0';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(e.x + e.width / 2, e.y + e.height / 2, 100 + Math.sin(Date.now() / 200) * 10, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    
                     ctx.fillStyle = '#f00';
                     ctx.font = 'bold 24px monospace';
                     ctx.textAlign = 'center';
                     ctx.fillText(e.name, e.x + e.width / 2, e.y - 30);
+                    
+                    // 显示"无敌"标识
+                    if (e.invulnerable) {
+                        ctx.fillStyle = '#ff0';
+                        ctx.font = 'bold 16px monospace';
+                        ctx.fillText('无敌', e.x + e.width / 2, e.y - 50);
+                    }
                 } else if (e.type === 'bird') {
                     ctx.fillStyle = '#888';
                     const wingOffset = Math.sin(e.flyFrame) * 5;
@@ -1770,6 +2110,19 @@
                 }
             });
 
+            // 渲染玩家导弹
+            game.playerMissiles.forEach(missile => {
+                ctx.fillStyle = '#ff6600';
+                ctx.fillRect(missile.x, missile.y, missile.width, missile.height);
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(missile.x, missile.y, missile.width, missile.height);
+                
+                // 导弹尾焰
+                ctx.fillStyle = 'rgba(255, 102, 0, 0.6)';
+                ctx.fillRect(missile.x - 10, missile.y + 2, 10, 4);
+            });
+
             game.bullets.forEach(b => {
                 ctx.fillStyle = '#ff0';
                 ctx.beginPath();
@@ -1782,6 +2135,33 @@
                 ctx.moveTo(b.x, b.y);
                 ctx.lineTo(b.x - b.vx * 0.5, b.y - b.vy * 0.5);
                 ctx.stroke();
+            });
+
+            // 渲染陨石
+            game.meteors.forEach(meteor => {
+                // 渲染拖尾
+                meteor.trail.forEach((t, index) => {
+                    ctx.fillStyle = `rgba(255, 136, 0, ${t.life / 10})`;
+                    ctx.beginPath();
+                    ctx.arc(t.x + meteor.width / 2, t.y + meteor.height / 2, 8 - index * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // 渲染陨石本体
+                ctx.save();
+                ctx.translate(meteor.x + meteor.width / 2, meteor.y + meteor.height / 2);
+                ctx.rotate(meteor.rotation);
+                
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(-meteor.width / 2, -meteor.height / 2, meteor.width, meteor.height);
+                
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(-meteor.width / 2 + 5, -meteor.height / 2 + 5, meteor.width - 10, meteor.height - 10);
+                
+                ctx.fillStyle = '#FF6347';
+                ctx.fillRect(-meteor.width / 2 + 10, -meteor.height / 2 + 10, meteor.width - 20, meteor.height - 20);
+                
+                ctx.restore();
             });
 
             game.particles.forEach(p => {
