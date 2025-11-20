@@ -324,16 +324,51 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         
-        // 测试连接
+        // 测试连接和诊断
         console.log('Firebase初始化完成');
+        console.log('数据库URL:', firebaseConfig.databaseURL);
+        
+        // 连接状态监听
         const connectedRef = ref(database, '.info/connected');
         onValue(connectedRef, (snapshot) => {
             if (snapshot.val() === true) {
                 console.log('✅ Firebase连接成功');
+                // 测试读取权限
+                testFirebaseConnection();
             } else {
                 console.log('❌ Firebase连接断开');
             }
         });
+        
+        // 测试Firebase连接和权限
+        function testFirebaseConnection() {
+            console.log('🔍 测试Firebase读写权限...');
+            
+            // 测试读取权限
+            const testRef = ref(database, 'test');
+            onValue(testRef, (snapshot) => {
+                console.log('✅ Firebase读取权限正常');
+                
+                // 测试写入权限
+                const testData = {
+                    test: 'connection_test',
+                    timestamp: Date.now()
+                };
+                
+                push(testRef, testData).then(() => {
+                    console.log('✅ Firebase写入权限正常');
+                    console.log('🎉 Firebase完全可用！');
+                }).catch((error) => {
+                    console.error('❌ Firebase写入失败:', error);
+                    console.error('可能原因: 数据库规则限制写入权限');
+                });
+            }, (error) => {
+                console.error('❌ Firebase读取失败:', error);
+                console.error('可能原因: 数据库规则限制或网络问题');
+            });
+        }
+        
+        window.testFirebaseConnection = testFirebaseConnection;
         
         // 将Firebase函数暴露到全局作用域
         window.firebaseDatabase = database;
@@ -2458,13 +2493,21 @@
         }
 
         function showLeaderboard() {
+            if (!window.firebaseDatabase) {
+                alert('Firebase未初始化，无法显示排行榜');
+                return;
+            }
+            
             document.getElementById('leaderboard').style.display = 'block';
             document.getElementById('leaderboardList').innerHTML = '加载中...';
             
+            console.log('📊 正在获取排行榜数据...');
             const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
             window.firebaseOnValue(leaderboardRef, (snapshot) => {
                 const data = snapshot.val();
                 let html = '';
+                
+                console.log('✅ 排行榜数据获取成功:', data);
                 
                 if (data) {
                     const scores = Object.values(data).sort((a, b) => {
@@ -2481,13 +2524,25 @@
                         </div>`;
                     });
                 } else {
+                    console.log('📭 排行榜暂无数据');
                     html = '<div style="color: #888;">暂无排行榜数据</div>';
                 }
                 
                 document.getElementById('leaderboardList').innerHTML = html;
             }, (error) => {
-                console.error('❌ 加载失败:', error);
-                document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">连接失败，请检查网络</div>';
+                console.error('❌ 获取排行榜失败:', error);
+                console.error('错误详情:', error.code, error.message);
+                
+                let errorMsg = '获取排行榜失败：';
+                if (error.code === 'PERMISSION_DENIED') {
+                    errorMsg += '数据库权限不足';
+                } else if (error.code === 'NETWORK_ERROR') {
+                    errorMsg += '网络连接问题';
+                } else {
+                    errorMsg += error.message || '未知错误';
+                }
+                
+                document.getElementById('leaderboardList').innerHTML = `<div style="color: #f00;">${errorMsg}</div>`;
             });
         }
 
