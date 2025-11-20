@@ -303,35 +303,31 @@
         <button onclick="closeLeaderboard()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; background: #0f0; color: #000;">关闭</button>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        // Firebase配置 - 这些是公开的客户端配置，不是私密信息
+        // Firebase配置
         const firebaseConfig = {
-            apiKey: "AIzaSyAVBOzk3XPRmeQNYy-5z_unauafZWgJTuY", // 公开API密钥，用于客户端连接
+            apiKey: "AIzaSyAVBOzk3XPRmeQNYy-5z_unauafZWgJTuY",
             authDomain: "shoting-c1f50.firebaseapp.com",
             databaseURL: "https://shoting-c1f50-default-rtdb.firebaseio.com",
             projectId: "shoting-c1f50",
             storageBucket: "shoting-c1f50.firebasestorage.app",
             messagingSenderId: "518106816196",
-            appId: "1:518106816196:web:84b2b83efee27cca9bf391",
-            measurementId: "G-SXVD6KVMF0"
+            appId: "1:518106816196:web:84b2b83efee27cca9bf391"
         };
         
         // 初始化Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        window.database = database;
         
         // 测试连接
         console.log('Firebase初始化完成');
         database.ref('.info/connected').on('value', function(snapshot) {
             if (snapshot.val() === true) {
-                console.log('Firebase连接成功');
+                console.log('✅ Firebase连接成功');
             } else {
-                console.log('Firebase连接断开');
+                console.log('❌ Firebase连接断开');
             }
         });
     </script>
@@ -2438,7 +2434,7 @@
                 console.log('开始上传分数:', playerName, deathCount);
                 
                 // 先测试写入权限
-                const testRef = window.database.ref('test');
+                const testRef = database.ref('test');
                 testRef.set({
                     test: 'connection',
                     timestamp: Date.now()
@@ -2446,7 +2442,7 @@
                     console.log('测试写入成功，开始上传分数');
                     
                     // 上传实际分数
-                    return window.database.ref('leaderboard').push({
+                    return database.ref('leaderboard').push({
                         name: playerName.trim(),
                         deaths: parseInt(deathCount),
                         maxLevel: parseInt(maxLevelReached),
@@ -2475,7 +2471,7 @@
                 console.log('开始加载排行榜');
                 
                 // 简化查询，先获取所有数据
-                const leaderboardRef = window.database.ref('leaderboard');
+                const leaderboardRef = database.ref('leaderboard');
                 
                 leaderboardRef.once('value').then((snapshot) => {
                     console.log('Firebase数据获取成功');
