@@ -320,104 +320,81 @@
             measurementId: "G-DHWVHGWWTD"
         };
         
-        // Initialize Firebase immediately
-        console.log('🚀 开始初始化Firebase...');
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        
-        // 立即暴露到全局作用域
-        window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebasePush = push;
-        window.firebaseOnValue = onValue;
-        window.firebaseSet = set;
-        window.firebaseInitialized = true;
-        
-        console.log('✅ Firebase已初始化并暴露到全局作用域');
         
         // 测试连接和诊断
         console.log('Firebase初始化完成');
         console.log('数据库URL:', firebaseConfig.databaseURL);
-        console.log('项目ID:', firebaseConfig.projectId);
         
         // 连接状态监听
         const connectedRef = ref(database, '.info/connected');
         onValue(connectedRef, (snapshot) => {
             if (snapshot.val() === true) {
                 console.log('✅ Firebase连接成功');
-                // 延迟测试，确保连接稳定
-                setTimeout(() => {
-                    testFirebaseConnection();
-                }, 1000);
+                // 测试读取权限
+                testFirebaseConnection();
             } else {
                 console.log('❌ Firebase连接断开');
             }
         });
         
-        // 添加更详细的错误监听
-        database.goOffline();
-        database.goOnline();
-        
         // 测试Firebase连接和权限
         function testFirebaseConnection() {
             console.log('🔍 测试Firebase读写权限...');
-            console.log('🔍 测试数据库URL:', database.app.options.databaseURL);
             
-            // 先测试根路径读取权限
-            console.log('🔍 测试根路径读取权限...');
-            const rootRef = ref(database, '/');
-            onValue(rootRef, (snapshot) => {
-                console.log('✅ 根路径读取成功');
+            // 测试读取权限
+            const testRef = ref(database, 'test');
+            onValue(testRef, (snapshot) => {
+                console.log('✅ Firebase读取权限正常');
                 
-                // 测试leaderboard路径读取
-                console.log('🔍 测试leaderboard路径读取权限...');
-                const leaderboardRef = ref(database, 'leaderboard');
-                onValue(leaderboardRef, (snapshot) => {
-                    console.log('✅ leaderboard读取权限正常');
+                // 测试写入权限
+                const testData = {
+                    test: 'connection_test',
+                    timestamp: Date.now()
+                };
+                
+                push(testRef, testData).then(() => {
+                    console.log('✅ Firebase写入权限正常');
+                    console.log('🎉 Firebase完全可用！');
+                }).catch((error) => {
+                    console.error('❌ Firebase写入失败:', error);
+                    console.error('错误代码:', error.code);
+                    console.error('错误信息:', error.message);
                     
-                    // 测试写入权限
-                    console.log('🔍 测试leaderboard写入权限...');
-                    const testData = {
-                        test: 'connection_test',
-                        timestamp: Date.now()
-                    };
-                    
-                    set(ref(database, 'leaderboard/test'), testData).then(() => {
-                        console.log('✅ Firebase写入权限正常');
-                        console.log('🎉 Firebase完全可用！');
-                    }).catch((error) => {
-                        console.error('❌ Firebase写入失败:', error);
-                        console.error('错误代码:', error.code);
-                        console.error('错误信息:', error.message);
-                        console.error('完整错误对象:', error);
-                        
-                        // 检查是否是数据库不存在
-                        if (error.message && error.message.includes('not found')) {
-                            console.error('🚨 数据库不存在！请在Firebase控制台创建Realtime Database');
-                            alert('数据库不存在！\n请在Firebase控制台创建Realtime Database:\n1. 进入Firebase控制台\n2. 选择Realtime Database\n3. 点击"创建数据库"');
-                        } else if (error.code === 'PERMISSION_DENIED') {
-                            console.error('🔧 当前规则可能有问题，建议使用全局规则');
-                            alert('权限仍被拒绝！\n建议使用全局规则:\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}\n\n确保点击"发布"并等待几分钟生效');
-                        }
-                    });
-                }, (error) => {
-                    console.error('❌ leaderboard读取失败:', error);
-                    console.error('错误详情:', error.code, error.message);
+                    if (error.code === 'PERMISSION_DENIED') {
+                        console.error('🔧 解决方案: 需要修改Firebase数据库规则');
+                        console.error('📝 请在Firebase控制台设置以下规则:');
+                        console.error(`{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}`);
+                        alert('Firebase权限被拒绝！\n请在Firebase控制台的Realtime Database规则中设置:\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}');
+                    }
                 });
             }, (error) => {
-                console.error('❌ 根路径读取失败:', error);
-                console.error('错误详情:', error.code, error.message);
+                console.error('❌ Firebase读取失败:', error);
+                console.error('错误代码:', error.code);
+                console.error('错误信息:', error.message);
                 
                 if (error.code === 'PERMISSION_DENIED') {
-                    console.error('🚨 根路径权限被拒绝，数据库规则可能有问题');
-                    alert('数据库根路径权限被拒绝！\n请检查:\n1. 是否在正确的Realtime Database设置规则\n2. 规则是否正确发布\n3. 数据库是否已创建');
+                    console.error('🔧 解决方案: 需要修改Firebase数据库规则');
+                    alert('Firebase权限被拒绝！\n请在Firebase控制台的Realtime Database规则中设置:\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}');
                 }
             });
         }
         
         window.testFirebaseConnection = testFirebaseConnection;
         
-        // Firebase函数已在上面暴露到全局作用域
+        // 将Firebase函数暴露到全局作用域
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebasePush = push;
+        window.firebaseOnValue = onValue;
+        window.firebaseSet = set;
     </script>
 
     <script>
@@ -2568,83 +2545,57 @@
         }
 
         function showLeaderboard() {
+            if (!window.firebaseDatabase) {
+                alert('Firebase未初始化，无法显示排行榜');
+                return;
+            }
+            
             document.getElementById('leaderboard').style.display = 'block';
             document.getElementById('leaderboardList').innerHTML = '加载中...';
             
-            // 简单的延迟确保Firebase已加载
-            setTimeout(() => {
-                if (!window.firebaseDatabase) {
-                    document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">Firebase加载失败，请刷新页面重试</div>';
-                    return;
+            console.log('📊 正在获取排行榜数据...');
+            const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
+            window.firebaseOnValue(leaderboardRef, (snapshot) => {
+                const data = snapshot.val();
+                let html = '';
+                
+                console.log('✅ 排行榜数据获取成功:', data);
+                
+                if (data) {
+                    const scores = Object.values(data).sort((a, b) => {
+                        if (b.maxLevel !== a.maxLevel) {
+                            return b.maxLevel - a.maxLevel;
+                        }
+                        return a.deaths - b.deaths;
+                    });
+                    
+                    scores.slice(0, 10).forEach((score, index) => {
+                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                        html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
+                            ${medal} ${score.name} - 通过${score.maxLevel}关 | 死亡${score.deaths}次
+                        </div>`;
+                    });
+                } else {
+                    console.log('📭 排行榜暂无数据');
+                    html = '<div style="color: #888;">暂无排行榜数据</div>';
                 }
                 
-                console.log('📊 正在获取排行榜数据...');
-                const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
-                window.firebaseOnValue(leaderboardRef, (snapshot) => {
-                    const data = snapshot.val();
-                    let html = '';
-                    
-                    console.log('✅ 排行榜原始数据:', data);
-                    
-                    if (data) {
-                        // 将数据转换为数组，确保包含所有玩家
-                        const scores = [];
-                        for (let key in data) {
-                            if (data[key] && data[key].name) {
-                                scores.push(data[key]);
-                            }
-                        }
-                        
-                        console.log('📊 转换后的分数数组:', scores);
-                        console.log('📊 玩家总数:', scores.length);
-                        
-                        // 排序：关卡数降序，死亡数升序
-                        scores.sort((a, b) => {
-                            if (b.maxLevel !== a.maxLevel) {
-                                return b.maxLevel - a.maxLevel;
-                            }
-                            return a.deaths - b.deaths;
-                        });
-                        
-                        console.log('📊 排序后的分数:', scores);
-                        
-                        if (scores.length > 0) {
-                            // 显示前10名
-                            scores.slice(0, 10).forEach((score, index) => {
-                                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                                html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
-                                    ${medal} ${score.name} - 通过${score.maxLevel}关 | 死亡${score.deaths}次
-                                </div>`;
-                            });
-                            
-                            html += `<div style="margin-top: 15px; color: #888; font-size: 14px;">
-                                共有 ${scores.length} 名玩家参与排行榜
-                            </div>`;
-                        } else {
-                            html = '<div style="color: #888;">暂无有效排行榜数据</div>';
-                        }
-                    } else {
-                        console.log('📭 排行榜暂无数据');
-                        html = '<div style="color: #888;">暂无排行榜数据</div>';
-                    }
-                    
-                    document.getElementById('leaderboardList').innerHTML = html;
-                }, (error) => {
-                    console.error('❌ 获取排行榜失败:', error);
-                    console.error('错误详情:', error.code, error.message);
-                    
-                    let errorMsg = '获取排行榜失败：';
-                    if (error.code === 'PERMISSION_DENIED') {
-                        errorMsg += '数据库权限不足';
-                    } else if (error.code === 'NETWORK_ERROR') {
-                        errorMsg += '网络连接问题';
-                    } else {
-                        errorMsg += error.message || '未知错误';
-                    }
-                    
-                    document.getElementById('leaderboardList').innerHTML = `<div style="color: #f00;">${errorMsg}</div>`;
-                });
-            }, 500); // 等待500ms确保Firebase加载完成
+                document.getElementById('leaderboardList').innerHTML = html;
+            }, (error) => {
+                console.error('❌ 获取排行榜失败:', error);
+                console.error('错误详情:', error.code, error.message);
+                
+                let errorMsg = '获取排行榜失败：';
+                if (error.code === 'PERMISSION_DENIED') {
+                    errorMsg += '数据库权限不足';
+                } else if (error.code === 'NETWORK_ERROR') {
+                    errorMsg += '网络连接问题';
+                } else {
+                    errorMsg += error.message || '未知错误';
+                }
+                
+                document.getElementById('leaderboardList').innerHTML = `<div style="color: #f00;">${errorMsg}</div>`;
+            });
         }
 
         function closeLeaderboard() {
