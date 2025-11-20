@@ -291,7 +291,9 @@
     <div id="victory">
         <div>🎉 恭喜你通关了！🎉</div>
         <div style="font-size: 32px; margin-top: 30px;">你击败了最终BOSS</div>
-        <div style="font-size: 24px; margin-top: 20px; color: #0f0;">死亡次数: <span id="finalDeaths">0</span></div>
+        <div style="font-size: 24px; margin-top: 20px; color: #0f0;">
+            通过关卡: <span id="finalCompletions">5</span> | 死亡次数: <span id="finalDeaths">0</span>
+        </div>
         <button onclick="showLeaderboard()" style="margin-top: 20px; padding: 15px 30px; font-size: 20px; background: #ff0; color: #000;">查看排行榜</button>
     </div>
     
@@ -304,8 +306,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script>
+        // Firebase配置 - 这些是公开的客户端配置，不是私密信息
         const firebaseConfig = {
-            apiKey: "AIzaSyAVBOzk3XPRmeQNYy-5z_unauafZWgJTuY",
+            apiKey: "AIzaSyAVBOzk3XPRmeQNYy-5z_unauafZWgJTuY", // 公开API密钥，用于客户端连接
             authDomain: "shoting-c1f50.firebaseapp.com",
             databaseURL: "https://shoting-c1f50-default-rtdb.firebaseio.com",
             projectId: "shoting-c1f50",
@@ -315,9 +318,22 @@
             measurementId: "G-SXVD6KVMF0"
         };
         
-        firebase.initializeApp(firebaseConfig);
+        // 初始化Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const database = firebase.database();
         window.database = database;
+        
+        // 测试连接
+        console.log('Firebase初始化完成');
+        database.ref('.info/connected').on('value', function(snapshot) {
+            if (snapshot.val() === true) {
+                console.log('Firebase连接成功');
+            } else {
+                console.log('Firebase连接断开');
+            }
+        });
     </script>
 
     <script>
@@ -334,6 +350,7 @@
         let immuneLastUsed = 0;
         let immuneActive = false;
         let deathCount = 0;
+        let maxLevelReached = 1;
         
         function startGame() {
             const input = document.getElementById('playerName').value.trim();
@@ -792,6 +809,7 @@
 
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             game.level++;
+            maxLevelReached = Math.max(maxLevelReached, game.level);
             document.getElementById('levelComplete').style.display = 'none';
             
             if (game.level === 3) {
@@ -1997,6 +2015,8 @@
                 document.getElementById('levelComplete').style.display = 'block';
                 
                 if (game.level === 5) {
+                    maxLevelReached = Math.max(maxLevelReached, 5);
+                    document.getElementById('finalCompletions').textContent = maxLevelReached;
                     document.getElementById('finalDeaths').textContent = deathCount;
                     document.getElementById('victory').style.display = 'block';
                     uploadScore();
@@ -2409,41 +2429,91 @@
         }
 
         function uploadScore() {
+            if (!playerName || playerName.trim() === '') {
+                console.error('玩家名称为空，无法上传分数');
+                return;
+            }
+            
             try {
-                window.database.ref('leaderboard').push({
-                    name: playerName,
-                    deaths: deathCount,
+                console.log('开始上传分数:', playerName, deathCount);
+                
+                // 先测试写入权限
+                const testRef = window.database.ref('test');
+                testRef.set({
+                    test: 'connection',
                     timestamp: Date.now()
+                }).then(() => {
+                    console.log('测试写入成功，开始上传分数');
+                    
+                    // 上传实际分数
+                    return window.database.ref('leaderboard').push({
+                        name: playerName.trim(),
+                        deaths: parseInt(deathCount),
+                        maxLevel: parseInt(maxLevelReached),
+                        timestamp: Date.now(),
+                        date: new Date().toISOString()
+                    });
+                }).then(() => {
+                    console.log('分数上传成功！');
+                    alert('分数已上传到排行榜！');
+                }).catch((error) => {
+                    console.error('上传失败详细信息:', error);
+                    alert('上传失败: ' + error.message);
                 });
+                
             } catch (error) {
-                console.error('上传分数失败:', error);
+                console.error('上传分数异常:', error);
+                alert('上传异常: ' + error.message);
             }
         }
 
         function showLeaderboard() {
             document.getElementById('leaderboard').style.display = 'block';
+            document.getElementById('leaderboardList').innerHTML = '加载中...';
+            
             try {
-                const leaderboardRef = window.database.ref('leaderboard').orderByChild('deaths').limitToFirst(10);
+                console.log('开始加载排行榜');
                 
-                leaderboardRef.on('value', (snapshot) => {
+                // 简化查询，先获取所有数据
+                const leaderboardRef = window.database.ref('leaderboard');
+                
+                leaderboardRef.once('value').then((snapshot) => {
+                    console.log('Firebase数据获取成功');
                     const data = snapshot.val();
                     let html = '';
-                    if (data) {
-                        const scores = Object.values(data).sort((a, b) => a.deaths - b.deaths);
-                        scores.forEach((score, index) => {
+                    
+                    if (data && Object.keys(data).length > 0) {
+                        console.log('排行榜数据:', data);
+                        // 排序：先按通过关卡数降序，关卡数相同时按死亡数升序
+                        const scores = Object.values(data).sort((a, b) => {
+                            const maxLevelA = a.maxLevel || 1;
+                            const maxLevelB = b.maxLevel || 1;
+                            if (maxLevelB !== maxLevelA) {
+                                return maxLevelB - maxLevelA; // 通过关卡多的在前
+                            }
+                            return a.deaths - b.deaths; // 死亡数少的在前
+                        });
+                        scores.slice(0, 10).forEach((score, index) => {
                             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                            const maxLevel = score.maxLevel || 1;
                             html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
-                                ${medal} ${score.name} - ${score.deaths} 次死亡
+                                ${medal} ${score.name} - 通过${maxLevel}关 | 死亡${score.deaths}次
                             </div>`;
                         });
                     } else {
+                        console.log('暂无排行榜数据');
                         html = '<div style="color: #888;">暂无排行榜数据</div>';
                     }
+                    
                     document.getElementById('leaderboardList').innerHTML = html;
+                }).catch((error) => {
+                    console.error('Firebase查询失败:', error);
+                    document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">连接失败，请检查网络</div>';
                 });
+                
             } catch (error) {
-                console.error('加载排行榜失败:', error);
-                document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">加载失败</div>';
+                console.error('加载排行榜异常:', error);
+                document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">加载异常</div>';
             }
         }
 
