@@ -320,9 +320,20 @@
             measurementId: "G-DHWVHGWWTD"
         };
         
-        // Initialize Firebase
+        // Initialize Firebase immediately
+        console.log('🚀 开始初始化Firebase...');
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        
+        // 立即暴露到全局作用域
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebasePush = push;
+        window.firebaseOnValue = onValue;
+        window.firebaseSet = set;
+        window.firebaseInitialized = true;
+        
+        console.log('✅ Firebase已初始化并暴露到全局作用域');
         
         // 测试连接和诊断
         console.log('Firebase初始化完成');
@@ -406,12 +417,7 @@
         
         window.testFirebaseConnection = testFirebaseConnection;
         
-        // 将Firebase函数暴露到全局作用域
-        window.firebaseDatabase = database;
-        window.firebaseRef = ref;
-        window.firebasePush = push;
-        window.firebaseOnValue = onValue;
-        window.firebaseSet = set;
+        // Firebase函数已在上面暴露到全局作用域
     </script>
 
     <script>
@@ -2562,20 +2568,10 @@
         }
 
         function showLeaderboard() {
-            // 检查Firebase是否已初始化，如果没有则等待初始化
-            if (!window.firebaseDatabase) {
-                console.log('Firebase正在初始化，请稍候...');
-                // 等待Firebase初始化完成
-                const checkFirebase = setInterval(() => {
-                    if (window.firebaseDatabase) {
-                        clearInterval(checkFirebase);
-                        showLeaderboard(); // 递归调用自己
-                    }
-                }, 100);
-                
-                // 显示加载状态
-                document.getElementById('leaderboard').style.display = 'block';
-                document.getElementById('leaderboardList').innerHTML = 'Firebase初始化中，请稍候...';
+            // 检查Firebase是否已初始化
+            if (!window.firebaseDatabase || !window.firebaseInitialized) {
+                console.log('⚠️ Firebase未初始化，尝试重新初始化...');
+                alert('Firebase未初始化，请刷新页面重试');
                 return;
             }
             
