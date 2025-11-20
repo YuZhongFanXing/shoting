@@ -1562,7 +1562,7 @@
                         enemy.vy *= 0.98;
                         
                         // 愚痴之魔技能1：混乱弹幕
-                        if (enemy.specialCooldown <= 0 && dist < 400) {
+                        if (enemy.specialCooldown <= 0) {
                             enemy.specialCooldown = 3000;
                             console.log('愚痴之魔发动混乱弹幕！');
                             for (let i = 0; i < 12; i++) {
@@ -1580,7 +1580,7 @@
                         }
                         
                         // 愚痴之魔技能2：追踪弹
-                        if (enemy.skill2Cooldown <= 0 && dist < 500) {
+                        if (enemy.skill2Cooldown <= 0) {
                             enemy.skill2Cooldown = 4000;
                             console.log('愚痴之魔发动追踪弹！');
                             for (let i = 0; i < 5; i++) {
@@ -1604,7 +1604,7 @@
                         }
                         
                         // 愚痴之魔技能3：瞬移攻击
-                        if (enemy.skill3Cooldown <= 0 && dist < 300) {
+                        if (enemy.skill3Cooldown <= 0) {
                             enemy.skill3Cooldown = 6000;
                             console.log('愚痴之魔发动瞬移攻击！');
                             // 瞬移到玩家附近
@@ -1658,7 +1658,7 @@
                         
                         if (enemy.subType === 'greed') {
                             // 贪念之魔技能1：金币弹幕（更频繁）
-                            if (enemy.specialCooldown <= 0 && dist < 350) {
+                            if (enemy.specialCooldown <= 0) {
                                 enemy.specialCooldown = 2000;
                                 console.log('贪念之魔发动金币弹幕！');
                                 for (let i = 0; i < 8; i++) {
@@ -1676,7 +1676,7 @@
                             }
                             
                             // 贪念之魔技能2：金币雨
-                            if (enemy.skill2Cooldown <= 0 && dist < 400) {
+                            if (enemy.skill2Cooldown <= 0) {
                                 enemy.skill2Cooldown = 4000;
                                 console.log('贪念之魔发动金币雨！');
                                 for (let i = 0; i < 12; i++) {
@@ -1713,7 +1713,7 @@
                             enemy.skill3Cooldown -= 16;
                         } else if (enemy.subType === 'anger') {
                             // 愤怒之魔技能1：冲锋攻击
-                            if (enemy.specialCooldown <= 0 && dist < 300 && dist > 80) {
+                            if (enemy.specialCooldown <= 0 && dist > 80) {
                                 enemy.specialCooldown = 3000;
                                 console.log('愤怒之魔发动冲锋攻击！');
                                 enemy.vx = dx > 0 ? enemy.speed * 4 : -enemy.speed * 4;
@@ -1725,7 +1725,7 @@
                             }
                             
                             // 愤怒之魔技能2：火焰弹幕
-                            if (enemy.skill2Cooldown <= 0 && dist < 400) {
+                            if (enemy.skill2Cooldown <= 0) {
                                 enemy.skill2Cooldown = 4000;
                                 console.log('愤怒之魔发动火焰弹幕！');
                                 for (let i = 0; i < 10; i++) {
@@ -1743,7 +1743,7 @@
                             }
                             
                             // 愤怒之魔技能3：陨石攻击
-                            if (enemy.skill3Cooldown <= 0 && dist < 500) {
+                            if (enemy.skill3Cooldown <= 0) {
                                 enemy.skill3Cooldown = 6000;
                                 console.log('愤怒之魔发动陨石攻击！');
                                 spawnMeteors(5);
