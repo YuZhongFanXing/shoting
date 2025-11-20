@@ -303,10 +303,12 @@
         <button onclick="closeLeaderboard()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; background: #0f0; color: #000;">关闭</button>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script>
-        // Firebase配置
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, off } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+        
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAVBOzk3XPRmeQNYy-5z_unauafZWgJTuY",
             authDomain: "shoting-c1f50.firebaseapp.com",
@@ -314,22 +316,30 @@
             projectId: "shoting-c1f50",
             storageBucket: "shoting-c1f50.firebasestorage.app",
             messagingSenderId: "518106816196",
-            appId: "1:518106816196:web:84b2b83efee27cca9bf391"
+            appId: "1:518106816196:web:5085fd67fbc4db749bf391",
+            measurementId: "G-DHWVHGWWTD"
         };
         
-        // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
         
         // 测试连接
         console.log('Firebase初始化完成');
-        database.ref('.info/connected').on('value', function(snapshot) {
+        const connectedRef = ref(database, '.info/connected');
+        onValue(connectedRef, (snapshot) => {
             if (snapshot.val() === true) {
                 console.log('✅ Firebase连接成功');
             } else {
                 console.log('❌ Firebase连接断开');
             }
         });
+        
+        // 将Firebase函数暴露到全局作用域
+        window.firebaseDatabase = database;
+        window.firebaseRef = ref;
+        window.firebasePush = push;
+        window.firebaseOnValue = onValue;
     </script>
 
     <script>
@@ -2426,91 +2436,59 @@
 
         function uploadScore() {
             if (!playerName || playerName.trim() === '') {
-                console.error('玩家名称为空，无法上传分数');
+                console.error('玩家名称为空');
                 return;
             }
             
-            try {
-                console.log('开始上传分数:', playerName, deathCount);
-                
-                // 先测试写入权限
-                const testRef = database.ref('test');
-                testRef.set({
-                    test: 'connection',
-                    timestamp: Date.now()
-                }).then(() => {
-                    console.log('测试写入成功，开始上传分数');
-                    
-                    // 上传实际分数
-                    return database.ref('leaderboard').push({
-                        name: playerName.trim(),
-                        deaths: parseInt(deathCount),
-                        maxLevel: parseInt(maxLevelReached),
-                        timestamp: Date.now(),
-                        date: new Date().toISOString()
-                    });
-                }).then(() => {
-                    console.log('分数上传成功！');
-                    alert('分数已上传到排行榜！');
-                }).catch((error) => {
-                    console.error('上传失败详细信息:', error);
-                    alert('上传失败: ' + error.message);
-                });
-                
-            } catch (error) {
-                console.error('上传分数异常:', error);
-                alert('上传异常: ' + error.message);
-            }
+            console.log('上传分数:', playerName, deathCount, maxLevelReached);
+            
+            const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
+            window.firebasePush(leaderboardRef, {
+                name: playerName.trim(),
+                deaths: deathCount,
+                maxLevel: maxLevelReached,
+                timestamp: Date.now()
+            }).then(() => {
+                console.log('✅ 分数上传成功');
+                alert('分数已上传到排行榜！');
+            }).catch((error) => {
+                console.error('❌ 上传失败:', error);
+                alert('上传失败，请检查网络连接');
+            });
         }
 
         function showLeaderboard() {
             document.getElementById('leaderboard').style.display = 'block';
             document.getElementById('leaderboardList').innerHTML = '加载中...';
             
-            try {
-                console.log('开始加载排行榜');
+            const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
+            window.firebaseOnValue(leaderboardRef, (snapshot) => {
+                const data = snapshot.val();
+                let html = '';
                 
-                // 简化查询，先获取所有数据
-                const leaderboardRef = database.ref('leaderboard');
-                
-                leaderboardRef.once('value').then((snapshot) => {
-                    console.log('Firebase数据获取成功');
-                    const data = snapshot.val();
-                    let html = '';
+                if (data) {
+                    const scores = Object.values(data).sort((a, b) => {
+                        if (b.maxLevel !== a.maxLevel) {
+                            return b.maxLevel - a.maxLevel;
+                        }
+                        return a.deaths - b.deaths;
+                    });
                     
-                    if (data && Object.keys(data).length > 0) {
-                        console.log('排行榜数据:', data);
-                        // 排序：先按通过关卡数降序，关卡数相同时按死亡数升序
-                        const scores = Object.values(data).sort((a, b) => {
-                            const maxLevelA = a.maxLevel || 1;
-                            const maxLevelB = b.maxLevel || 1;
-                            if (maxLevelB !== maxLevelA) {
-                                return maxLevelB - maxLevelA; // 通过关卡多的在前
-                            }
-                            return a.deaths - b.deaths; // 死亡数少的在前
-                        });
-                        scores.slice(0, 10).forEach((score, index) => {
-                            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                            const maxLevel = score.maxLevel || 1;
-                            html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
-                                ${medal} ${score.name} - 通过${maxLevel}关 | 死亡${score.deaths}次
-                            </div>`;
-                        });
-                    } else {
-                        console.log('暂无排行榜数据');
-                        html = '<div style="color: #888;">暂无排行榜数据</div>';
-                    }
-                    
-                    document.getElementById('leaderboardList').innerHTML = html;
-                }).catch((error) => {
-                    console.error('Firebase查询失败:', error);
-                    document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">连接失败，请检查网络</div>';
-                });
+                    scores.slice(0, 10).forEach((score, index) => {
+                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                        html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
+                            ${medal} ${score.name} - 通过${score.maxLevel}关 | 死亡${score.deaths}次
+                        </div>`;
+                    });
+                } else {
+                    html = '<div style="color: #888;">暂无排行榜数据</div>';
+                }
                 
-            } catch (error) {
-                console.error('加载排行榜异常:', error);
-                document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">加载异常</div>';
-            }
+                document.getElementById('leaderboardList').innerHTML = html;
+            }, (error) => {
+                console.error('❌ 加载失败:', error);
+                document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">连接失败，请检查网络</div>';
+            });
         }
 
         function closeLeaderboard() {
