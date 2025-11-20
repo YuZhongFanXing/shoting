@@ -301,10 +301,9 @@
         <button onclick="closeLeaderboard()" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; background: #0f0; color: #000;">关闭</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, query, orderByChild, limitToFirst } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-        
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAVBOzk3XPRmeQNYy-5z_unauafZWgJTuY",
             authDomain: "shoting-c1f50.firebaseapp.com",
@@ -316,8 +315,8 @@
             measurementId: "G-SXVD6KVMF0"
         };
         
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
         window.database = database;
     </script>
 
@@ -2409,10 +2408,9 @@
             requestAnimationFrame(gameLoop);
         }
 
-        async function uploadScore() {
+        function uploadScore() {
             try {
-                const { ref, push } = await import("https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js");
-                await push(ref(window.database, 'leaderboard'), {
+                window.database.ref('leaderboard').push({
                     name: playerName,
                     deaths: deathCount,
                     timestamp: Date.now()
@@ -2422,13 +2420,12 @@
             }
         }
 
-        async function showLeaderboard() {
+        function showLeaderboard() {
             document.getElementById('leaderboard').style.display = 'block';
             try {
-                const { ref, onValue, query, orderByChild, limitToFirst } = await import("https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js");
-                const leaderboardRef = query(ref(window.database, 'leaderboard'), orderByChild('deaths'), limitToFirst(10));
+                const leaderboardRef = window.database.ref('leaderboard').orderByChild('deaths').limitToFirst(10);
                 
-                onValue(leaderboardRef, (snapshot) => {
+                leaderboardRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     let html = '';
                     if (data) {
