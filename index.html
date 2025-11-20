@@ -2568,82 +2568,83 @@
         }
 
         function showLeaderboard() {
-            // 检查Firebase是否已初始化
-            if (!window.firebaseDatabase || !window.firebaseInitialized) {
-                console.log('⚠️ Firebase未初始化，尝试重新初始化...');
-                alert('Firebase未初始化，请刷新页面重试');
-                return;
-            }
-            
             document.getElementById('leaderboard').style.display = 'block';
             document.getElementById('leaderboardList').innerHTML = '加载中...';
             
-            console.log('📊 正在获取排行榜数据...');
-            const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
-            window.firebaseOnValue(leaderboardRef, (snapshot) => {
-                const data = snapshot.val();
-                let html = '';
+            // 简单的延迟确保Firebase已加载
+            setTimeout(() => {
+                if (!window.firebaseDatabase) {
+                    document.getElementById('leaderboardList').innerHTML = '<div style="color: #f00;">Firebase加载失败，请刷新页面重试</div>';
+                    return;
+                }
                 
-                console.log('✅ 排行榜原始数据:', data);
-                
-                if (data) {
-                    // 将数据转换为数组，确保包含所有玩家
-                    const scores = [];
-                    for (let key in data) {
-                        if (data[key] && data[key].name) {
-                            scores.push(data[key]);
+                console.log('📊 正在获取排行榜数据...');
+                const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
+                window.firebaseOnValue(leaderboardRef, (snapshot) => {
+                    const data = snapshot.val();
+                    let html = '';
+                    
+                    console.log('✅ 排行榜原始数据:', data);
+                    
+                    if (data) {
+                        // 将数据转换为数组，确保包含所有玩家
+                        const scores = [];
+                        for (let key in data) {
+                            if (data[key] && data[key].name) {
+                                scores.push(data[key]);
+                            }
                         }
-                    }
-                    
-                    console.log('📊 转换后的分数数组:', scores);
-                    console.log('📊 玩家总数:', scores.length);
-                    
-                    // 排序：关卡数降序，死亡数升序
-                    scores.sort((a, b) => {
-                        if (b.maxLevel !== a.maxLevel) {
-                            return b.maxLevel - a.maxLevel;
-                        }
-                        return a.deaths - b.deaths;
-                    });
-                    
-                    console.log('📊 排序后的分数:', scores);
-                    
-                    if (scores.length > 0) {
-                        // 显示前10名
-                        scores.slice(0, 10).forEach((score, index) => {
-                            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                            html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
-                                ${medal} ${score.name} - 通过${score.maxLevel}关 | 死亡${score.deaths}次
-                            </div>`;
+                        
+                        console.log('📊 转换后的分数数组:', scores);
+                        console.log('📊 玩家总数:', scores.length);
+                        
+                        // 排序：关卡数降序，死亡数升序
+                        scores.sort((a, b) => {
+                            if (b.maxLevel !== a.maxLevel) {
+                                return b.maxLevel - a.maxLevel;
+                            }
+                            return a.deaths - b.deaths;
                         });
                         
-                        html += `<div style="margin-top: 15px; color: #888; font-size: 14px;">
-                            共有 ${scores.length} 名玩家参与排行榜
-                        </div>`;
+                        console.log('📊 排序后的分数:', scores);
+                        
+                        if (scores.length > 0) {
+                            // 显示前10名
+                            scores.slice(0, 10).forEach((score, index) => {
+                                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                                html += `<div style="margin: 10px 0; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #0f0;">
+                                    ${medal} ${score.name} - 通过${score.maxLevel}关 | 死亡${score.deaths}次
+                                </div>`;
+                            });
+                            
+                            html += `<div style="margin-top: 15px; color: #888; font-size: 14px;">
+                                共有 ${scores.length} 名玩家参与排行榜
+                            </div>`;
+                        } else {
+                            html = '<div style="color: #888;">暂无有效排行榜数据</div>';
+                        }
                     } else {
-                        html = '<div style="color: #888;">暂无有效排行榜数据</div>';
+                        console.log('📭 排行榜暂无数据');
+                        html = '<div style="color: #888;">暂无排行榜数据</div>';
                     }
-                } else {
-                    console.log('📭 排行榜暂无数据');
-                    html = '<div style="color: #888;">暂无排行榜数据</div>';
-                }
-                
-                document.getElementById('leaderboardList').innerHTML = html;
-            }, (error) => {
-                console.error('❌ 获取排行榜失败:', error);
-                console.error('错误详情:', error.code, error.message);
-                
-                let errorMsg = '获取排行榜失败：';
-                if (error.code === 'PERMISSION_DENIED') {
-                    errorMsg += '数据库权限不足';
-                } else if (error.code === 'NETWORK_ERROR') {
-                    errorMsg += '网络连接问题';
-                } else {
-                    errorMsg += error.message || '未知错误';
-                }
-                
-                document.getElementById('leaderboardList').innerHTML = `<div style="color: #f00;">${errorMsg}</div>`;
-            });
+                    
+                    document.getElementById('leaderboardList').innerHTML = html;
+                }, (error) => {
+                    console.error('❌ 获取排行榜失败:', error);
+                    console.error('错误详情:', error.code, error.message);
+                    
+                    let errorMsg = '获取排行榜失败：';
+                    if (error.code === 'PERMISSION_DENIED') {
+                        errorMsg += '数据库权限不足';
+                    } else if (error.code === 'NETWORK_ERROR') {
+                        errorMsg += '网络连接问题';
+                    } else {
+                        errorMsg += error.message || '未知错误';
+                    }
+                    
+                    document.getElementById('leaderboardList').innerHTML = `<div style="color: #f00;">${errorMsg}</div>`;
+                });
+            }, 500); // 等待500ms确保Firebase加载完成
         }
 
         function closeLeaderboard() {
