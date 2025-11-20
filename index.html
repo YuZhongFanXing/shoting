@@ -306,7 +306,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, off } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, off, set } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -360,11 +360,30 @@
                     console.log('🎉 Firebase完全可用！');
                 }).catch((error) => {
                     console.error('❌ Firebase写入失败:', error);
-                    console.error('可能原因: 数据库规则限制写入权限');
+                    console.error('错误代码:', error.code);
+                    console.error('错误信息:', error.message);
+                    
+                    if (error.code === 'PERMISSION_DENIED') {
+                        console.error('🔧 解决方案: 需要修改Firebase数据库规则');
+                        console.error('📝 请在Firebase控制台设置以下规则:');
+                        console.error(`{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}`);
+                        alert('Firebase权限被拒绝！\n请在Firebase控制台的Realtime Database规则中设置:\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}');
+                    }
                 });
             }, (error) => {
                 console.error('❌ Firebase读取失败:', error);
-                console.error('可能原因: 数据库规则限制或网络问题');
+                console.error('错误代码:', error.code);
+                console.error('错误信息:', error.message);
+                
+                if (error.code === 'PERMISSION_DENIED') {
+                    console.error('🔧 解决方案: 需要修改Firebase数据库规则');
+                    alert('Firebase权限被拒绝！\n请在Firebase控制台的Realtime Database规则中设置:\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}');
+                }
             });
         }
         
@@ -375,6 +394,7 @@
         window.firebaseRef = ref;
         window.firebasePush = push;
         window.firebaseOnValue = onValue;
+        window.firebaseSet = set;
     </script>
 
     <script>
@@ -2055,12 +2075,16 @@
                 game.levelComplete = true;
                 document.getElementById('levelComplete').style.display = 'block';
                 
+                // 更新最高关卡记录
+                maxLevelReached = Math.max(maxLevelReached, game.level);
+                
+                // 每关完成都上传分数
+                uploadScore();
+                
                 if (game.level === 5) {
-                    maxLevelReached = Math.max(maxLevelReached, 5);
                     document.getElementById('finalCompletions').textContent = maxLevelReached;
                     document.getElementById('finalDeaths').textContent = deathCount;
                     document.getElementById('victory').style.display = 'block';
-                    uploadScore();
                 }
             }
         }
@@ -2477,19 +2501,47 @@
             
             console.log('上传分数:', playerName, deathCount, maxLevelReached);
             
-            const leaderboardRef = window.firebaseRef(window.firebaseDatabase, 'leaderboard');
-            window.firebasePush(leaderboardRef, {
-                name: playerName.trim(),
-                deaths: deathCount,
-                maxLevel: maxLevelReached,
-                timestamp: Date.now()
-            }).then(() => {
-                console.log('✅ 分数上传成功');
-                alert('分数已上传到排行榜！');
-            }).catch((error) => {
-                console.error('❌ 上传失败:', error);
-                alert('上传失败，请检查网络连接');
-            });
+            // 使用玩家名称作为唯一标识，避免重复记录
+            const playerRef = window.firebaseRef(window.firebaseDatabase, `leaderboard/${playerName.trim()}`);
+            
+            // 先读取现有记录，只在成绩更好时更新
+            window.firebaseOnValue(playerRef, (snapshot) => {
+                const existingData = snapshot.val();
+                let shouldUpdate = false;
+                
+                if (!existingData) {
+                    // 没有记录，直接上传
+                    shouldUpdate = true;
+                } else {
+                    // 有记录，比较成绩：关卡数更高，或关卡数相同但死亡数更少
+                    if (maxLevelReached > existingData.maxLevel ||
+                        (maxLevelReached === existingData.maxLevel && deathCount < existingData.deaths)) {
+                        shouldUpdate = true;
+                    }
+                }
+                
+                if (shouldUpdate) {
+                    // 使用set而不是push，避免重复记录
+                    const playerRefForSet = window.firebaseRef(window.firebaseDatabase, `leaderboard/${playerName.trim()}`);
+                    
+                    window.firebaseSet(playerRefForSet, {
+                        name: playerName.trim(),
+                        deaths: deathCount,
+                        maxLevel: maxLevelReached,
+                        timestamp: Date.now()
+                    }).then(() => {
+                        console.log('✅ 分数上传成功');
+                        if (game.level === 5) {
+                            alert('恭喜通关！分数已上传到排行榜！');
+                        }
+                    }).catch((error) => {
+                        console.error('❌ 上传失败:', error);
+                        alert('上传失败，请检查网络连接');
+                    });
+                } else {
+                    console.log('当前成绩未超过已有记录，不更新');
+                }
+            }, { onlyOnce: true });
         }
 
         function showLeaderboard() {
